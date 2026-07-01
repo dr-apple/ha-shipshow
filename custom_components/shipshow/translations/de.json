@@ -1,0 +1,39 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "ShipShow",
+        "description": "Gib den API-Schluessel aus der ShipShow-App ein. Der API-Zugriff erfordert ein aktives Pro-Abo.",
+        "data": {
+          "api_key": "API-Schluessel",
+          "api_base_url": "API-Basis-URL"
+        }
+      }
+    },
+    "error": {
+      "cannot_connect": "ShipShow konnte nicht erreicht werden.",
+      "invalid_auth": "ShipShow hat den API-Schluessel abgelehnt."
+    },
+    "abort": {
+      "already_configured": "Dieser ShipShow API-Schluessel ist bereits eingerichtet."
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "ShipShow-Optionen",
+        "data": {
+          "category_id": "Kategorie-ID",
+          "search": "Suche",
+          "status_filter": "Statusfilter",
+          "limit": "Ergebnisse pro Seite",
+          "max_pages": "Maximale Seiten",
+          "sort_by": "Sortieren nach",
+          "sort_order": "Sortierreihenfolge",
+          "include_delivered": "Zugestellte Pakete einschliessen",
+          "scan_interval": "Abrufintervall in Sekunden"
+        }
+      }
+    }
+  }
+}

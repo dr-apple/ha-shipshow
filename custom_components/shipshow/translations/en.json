@@ -1,0 +1,39 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "ShipShow",
+        "description": "Enter the API key generated in the ShipShow mobile app. API access requires an active Pro subscription.",
+        "data": {
+          "api_key": "API key",
+          "api_base_url": "API base URL"
+        }
+      }
+    },
+    "error": {
+      "cannot_connect": "Could not connect to ShipShow.",
+      "invalid_auth": "ShipShow rejected the API key."
+    },
+    "abort": {
+      "already_configured": "This ShipShow API key is already configured."
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "ShipShow options",
+        "data": {
+          "category_id": "Category ID",
+          "search": "Search",
+          "status_filter": "Status filter",
+          "limit": "Results per page",
+          "max_pages": "Maximum pages",
+          "sort_by": "Sort by",
+          "sort_order": "Sort order",
+          "include_delivered": "Include delivered packages",
+          "scan_interval": "Scan interval in seconds"
+        }
+      }
+    }
+  }
+}
