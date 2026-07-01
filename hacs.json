@@ -1,6 +1,5 @@
 {
   "name": "ShipShow",
   "render_readme": true,
-  "domains": ["sensor", "binary_sensor", "calendar"],
   "homeassistant": "2024.8.0"
 }
