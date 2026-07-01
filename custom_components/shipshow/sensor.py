@@ -57,7 +57,7 @@ TRACKING_SENSOR_DESCRIPTIONS = [
         key="days_until_delivery",
         translation_key="days_until_delivery",
         native_unit_of_measurement=UnitOfTime.DAYS,
-        value_fn=_days_until_delivery,
+        value_fn=lambda tracking: _days_until_delivery(tracking),
     ),
 ]
 

@@ -8,6 +8,7 @@ from typing import Any
 from homeassistant.components.calendar import CalendarEntity, CalendarEvent
 from homeassistant.core import HomeAssistant, callback
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
+from homeassistant.util import dt as dt_util
 
 from . import ShipShowConfigEntry
 from .coordinator import ShipShowDataUpdateCoordinator
@@ -89,7 +90,10 @@ class ShipShowDeliveryCalendar(ShipShowTrackingEntity, CalendarEntity):
         event_start = event.start
         if isinstance(event_start, datetime) and start_date <= event_start <= end_date:
             return [event]
-        if not isinstance(event_start, datetime) and start_date.date() <= event_start <= end_date.date():
+        if (
+            not isinstance(event_start, datetime)
+            and start_date.date() <= event_start <= end_date.date()
+        ):
             return [event]
         return []
 
@@ -106,7 +110,10 @@ def _event_from_tracking(tracking: dict[str, Any]) -> CalendarEvent | None:
     if tracking.get("scheduleddeliverytime"):
         try:
             hour, minute, *_ = str(tracking["scheduleddeliverytime"]).split(":")
-            start = datetime.combine(delivery_date, time(int(hour), int(minute)))
+            start = datetime.combine(
+                delivery_date,
+                time(int(hour), int(minute), tzinfo=dt_util.DEFAULT_TIME_ZONE),
+            )
             end = start + timedelta(hours=1)
         except (TypeError, ValueError):
             start = delivery_date
@@ -122,5 +129,5 @@ def _event_from_tracking(tracking: dict[str, Any]) -> CalendarEvent | None:
         description=tracking.get("last_status_message"),
         location=(tracking.get("history") or [{}])[0].get("locationaddress"),
         uid=str(tracking.get("tracking_id") or tracking.get("trackingnumber")),
-        recurrence_id=status_time,
+        recurrence_id=status_time.isoformat() if status_time else None,
     )
