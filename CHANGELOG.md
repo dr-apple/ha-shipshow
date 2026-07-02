@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.4.0
+
+- Show all active deliveries directly in the visible `Lieferübersicht` sensor state.
+- Fix Home Assistant entity names that could still be prefixed with `UndefinedType._singleton`.
+- Keep Amazon/carrier stop support active when ShipShow exposes stop metadata in the API response.
+
 ## 0.3.0
 
 - Fix entity names that showed `UndefinedType._singleton`.

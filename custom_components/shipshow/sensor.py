@@ -232,18 +232,9 @@ class ShipShowDeliveryOverviewSensor(ShipShowEntity, SensorEntity):
         if not deliveries:
             return "Keine aktiven Lieferungen"
 
-        out_for_delivery = [
-            item for item in deliveries if item.get("status_code") == "outfordelivery"
-        ]
-        selected = out_for_delivery[0] if out_for_delivery else deliveries[0]
-        stops = selected.get("stopps_verbleibend")
-        if stops is not None:
-            return f"{selected['titel']} - noch {stops} Stopps"
-        if selected.get("geplante_lieferung"):
-            return f"{selected['titel']} - {selected['geplante_lieferung']}"
-        if selected.get("meldung"):
-            return f"{selected['titel']} - {selected['meldung']}"
-        return str(selected["titel"])
+        overview = f"{len(deliveries)} aktiv: "
+        lines = [_delivery_overview_line(item) for item in deliveries]
+        return _truncate_state(f"{overview}{'; '.join(lines)}")
 
     @property
     def extra_state_attributes(self) -> dict[str, Any]:
@@ -375,3 +366,23 @@ def _compact_delivery(tracking_id: str, tracking: dict[str, Any]) -> dict[str, A
         "stopps_verbleibend": stops.get("remaining"),
         "stopp_meldung": stops.get("message"),
     }
+
+
+def _delivery_overview_line(delivery: dict[str, Any]) -> str:
+    """Return one compact human-readable delivery line."""
+    title = str(delivery["titel"])
+    stops = delivery.get("stopps_verbleibend")
+    if stops is not None:
+        return f"{title} - noch {stops} Stopps"
+    if delivery.get("geplante_lieferung"):
+        return f"{title} - {delivery['geplante_lieferung']}"
+    if delivery.get("status"):
+        return f"{title} - {delivery['status']}"
+    return title
+
+
+def _truncate_state(value: str) -> str:
+    """Keep the visible sensor state below Home Assistant's state length limit."""
+    if len(value) <= 255:
+        return value
+    return f"{value[:252]}..."
