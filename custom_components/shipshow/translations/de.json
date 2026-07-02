@@ -3,19 +3,19 @@
     "step": {
       "user": {
         "title": "ShipShow",
-        "description": "Gib den API-Schluessel aus der ShipShow-App ein. Der API-Zugriff erfordert ein aktives Pro-Abo.",
+        "description": "Gib den API-Schlüssel aus der ShipShow-App ein. Der API-Zugriff erfordert ein aktives Pro-Abo.",
         "data": {
-          "api_key": "API-Schluessel",
+          "api_key": "API-Schlüssel",
           "api_base_url": "API-Basis-URL"
         }
       }
     },
     "error": {
       "cannot_connect": "ShipShow konnte nicht erreicht werden.",
-      "invalid_auth": "ShipShow hat den API-Schluessel abgelehnt."
+      "invalid_auth": "ShipShow hat den API-Schlüssel abgelehnt."
     },
     "abort": {
-      "already_configured": "Dieser ShipShow API-Schluessel ist bereits eingerichtet."
+      "already_configured": "Dieser ShipShow API-Schlüssel ist bereits eingerichtet."
     }
   },
   "options": {
@@ -30,9 +30,36 @@
           "max_pages": "Maximale Seiten",
           "sort_by": "Sortieren nach",
           "sort_order": "Sortierreihenfolge",
-          "include_delivered": "Zugestellte Pakete einschliessen",
+          "include_delivered": "Zugestellte Pakete einschließen",
           "scan_interval": "Abrufintervall in Sekunden"
         }
+      }
+    }
+  },
+  "entity": {
+    "sensor": {
+      "status": {
+        "name": "Status"
+      },
+      "last_status_message": {
+        "name": "Letzte Meldung"
+      },
+      "scheduled_delivery": {
+        "name": "Geplante Lieferung"
+      },
+      "days_until_delivery": {
+        "name": "Tage bis Lieferung"
+      }
+    },
+    "binary_sensor": {
+      "delivered": {
+        "name": "Zugestellt"
+      },
+      "out_for_delivery": {
+        "name": "In Zustellung"
+      },
+      "exception": {
+        "name": "Problem"
       }
     }
   }

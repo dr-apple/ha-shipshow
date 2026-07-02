@@ -46,6 +46,12 @@ BINARY_SENSOR_DESCRIPTIONS = [
     ),
 ]
 
+BINARY_SENSOR_NAMES = {
+    "delivered": "Zugestellt",
+    "out_for_delivery": "In Zustellung",
+    "exception": "Problem",
+}
+
 
 async def async_setup_entry(
     hass: HomeAssistant,
@@ -105,7 +111,11 @@ class ShipShowTrackingBinarySensor(ShipShowTrackingEntity, BinarySensorEntity):
     @property
     def name(self) -> str:
         """Return entity name."""
-        return f"{tracking_title(self.tracking)} {self.entity_description.key}"
+        label = BINARY_SENSOR_NAMES.get(
+            self.entity_description.key,
+            self.entity_description.key,
+        )
+        return f"{tracking_title(self.tracking)} {label}"
 
     @property
     def is_on(self) -> bool:
