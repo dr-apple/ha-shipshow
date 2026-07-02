@@ -16,7 +16,7 @@ from .coordinator import ShipShowDataUpdateCoordinator
 class ShipShowEntity(CoordinatorEntity[ShipShowDataUpdateCoordinator]):
     """Base ShipShow entity."""
 
-    _attr_has_entity_name = True
+    _attr_has_entity_name = False
 
 
 class ShipShowTrackingEntity(ShipShowEntity):
