@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.3.0
+
+- Fix entity names that showed `UndefinedType._singleton`.
+- Rename sensors and setup/options text to German.
+- Add visible `Lieferübersicht` text sensor in addition to the numeric `Aktuelle Lieferungen` overview sensor.
+- Translate status values and overview attributes to German.
+
 ## 0.2.0
 
 - Add `Active Deliveries` overview sensor for automations.

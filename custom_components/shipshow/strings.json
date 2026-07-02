@@ -3,35 +3,35 @@
     "step": {
       "user": {
         "title": "ShipShow",
-        "description": "Enter the API key generated in the ShipShow mobile app. API access requires an active Pro subscription.",
+        "description": "Gib den API-Schlüssel aus der ShipShow-App ein. Der API-Zugriff erfordert ein aktives Pro-Abo.",
         "data": {
-          "api_key": "API key",
-          "api_base_url": "API base URL"
+          "api_key": "API-Schlüssel",
+          "api_base_url": "API-Basis-URL"
         }
       }
     },
     "error": {
-      "cannot_connect": "Could not connect to ShipShow.",
-      "invalid_auth": "ShipShow rejected the API key."
+      "cannot_connect": "ShipShow konnte nicht erreicht werden.",
+      "invalid_auth": "ShipShow hat den API-Schlüssel abgelehnt."
     },
     "abort": {
-      "already_configured": "This ShipShow API key is already configured."
+      "already_configured": "Dieser ShipShow API-Schlüssel ist bereits eingerichtet."
     }
   },
   "options": {
     "step": {
       "init": {
-        "title": "ShipShow options",
+        "title": "ShipShow-Optionen",
         "data": {
-          "category_id": "Category ID",
-          "search": "Search",
-          "status_filter": "Status filter",
-          "limit": "Results per page",
-          "max_pages": "Maximum pages",
-          "sort_by": "Sort by",
-          "sort_order": "Sort order",
-          "include_delivered": "Include delivered packages",
-          "scan_interval": "Scan interval in seconds"
+          "category_id": "Kategorie-ID",
+          "search": "Suche",
+          "status_filter": "Statusfilter",
+          "limit": "Ergebnisse pro Seite",
+          "max_pages": "Maximale Seiten",
+          "sort_by": "Sortieren nach",
+          "sort_order": "Sortierreihenfolge",
+          "include_delivered": "Zugestellte Pakete einschließen",
+          "scan_interval": "Abrufintervall in Sekunden"
         }
       }
     }
@@ -42,24 +42,24 @@
         "name": "Status"
       },
       "last_status_message": {
-        "name": "Last status message"
+        "name": "Letzte Meldung"
       },
       "scheduled_delivery": {
-        "name": "Scheduled delivery"
+        "name": "Geplante Lieferung"
       },
       "days_until_delivery": {
-        "name": "Days until delivery"
+        "name": "Tage bis Lieferung"
       }
     },
     "binary_sensor": {
       "delivered": {
-        "name": "Delivered"
+        "name": "Zugestellt"
       },
       "out_for_delivery": {
-        "name": "Out for delivery"
+        "name": "In Zustellung"
       },
       "exception": {
-        "name": "Exception"
+        "name": "Problem"
       }
     }
   }
