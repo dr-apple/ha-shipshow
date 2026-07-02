@@ -6,7 +6,11 @@ from dataclasses import dataclass
 from datetime import date
 from typing import Any, Callable
 
-from homeassistant.components.sensor import SensorDeviceClass, SensorEntity, SensorEntityDescription
+from homeassistant.components.sensor import (
+    SensorDeviceClass,
+    SensorEntity,
+    SensorEntityDescription,
+)
 from homeassistant.const import EntityCategory, UnitOfTime
 from homeassistant.core import HomeAssistant, callback
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
@@ -14,7 +18,14 @@ from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from . import ShipShowConfigEntry
 from .const import DOMAIN
 from .coordinator import ShipShowDataUpdateCoordinator
-from .helpers import ShipShowEntity, ShipShowTrackingEntity, parse_date, tracking_title
+from .helpers import (
+    ShipShowEntity,
+    ShipShowTrackingEntity,
+    parse_date,
+    tracking_carrier,
+    tracking_stops,
+    tracking_title,
+)
 
 
 @dataclass(frozen=True, kw_only=True)
@@ -39,6 +50,7 @@ TRACKING_SENSOR_DESCRIPTIONS = [
             "comments": tracking.get("comments"),
             "media": tracking.get("media"),
             "history": tracking.get("history"),
+            "stops": tracking_stops(tracking),
         },
     ),
     ShipShowTrackingSensorDescription(
@@ -95,6 +107,7 @@ class ShipShowSensorManager:
             entities.extend(
                 [
                     ShipShowAccountSensor(self.coordinator, "total", "Total Packages"),
+                    ShipShowActiveDeliveriesSensor(self.coordinator),
                     ShipShowAccountSensor(self.coordinator, "transit", "In Transit"),
                     ShipShowAccountSensor(
                         self.coordinator,
@@ -154,6 +167,55 @@ class ShipShowAccountSensor(ShipShowEntity, SensorEntity):
         }
 
 
+class ShipShowActiveDeliveriesSensor(ShipShowEntity, SensorEntity):
+    """Automation-friendly overview of current deliveries."""
+
+    _attr_icon = "mdi:truck-delivery-outline"
+    _attr_native_unit_of_measurement = "packages"
+
+    def __init__(self, coordinator: ShipShowDataUpdateCoordinator) -> None:
+        super().__init__(coordinator)
+        self._attr_name = "Active Deliveries"
+        self._attr_unique_id = f"{coordinator.config_entry.entry_id}_active_deliveries"
+
+    @property
+    def native_value(self) -> int:
+        """Return active delivery count."""
+        return len(_active_trackings(self.coordinator.data.trackings))
+
+    @property
+    def extra_state_attributes(self) -> dict[str, Any]:
+        """Return compact delivery data for automations."""
+        active = _active_trackings(self.coordinator.data.trackings)
+        deliveries = [
+            _compact_delivery(tracking_id, tracking)
+            for tracking_id, tracking in active.items()
+        ]
+        deliveries.sort(
+            key=lambda item: (
+                item.get("scheduled_delivery") or "9999-12-31",
+                item.get("title") or "",
+            )
+        )
+        next_delivery = deliveries[0] if deliveries else None
+        return {
+            "deliveries": deliveries,
+            "next_delivery": next_delivery,
+            "out_for_delivery": [
+                item for item in deliveries if item.get("status") == "outfordelivery"
+            ],
+            "with_stops": [
+                item for item in deliveries if item.get("stops_remaining") is not None
+            ],
+            "has_out_for_delivery": any(
+                item.get("status") == "outfordelivery" for item in deliveries
+            ),
+            "has_exceptions": any(
+                item.get("status") == "exception" for item in deliveries
+            ),
+        }
+
+
 class ShipShowTrackingSensor(ShipShowTrackingEntity, SensorEntity):
     """Tracking detail sensor."""
 
@@ -193,3 +255,33 @@ def _days_until_delivery(tracking: dict[str, Any]) -> int | None:
     if delivery_date is None:
         return None
     return (delivery_date - date.today()).days
+
+
+def _active_trackings(
+    trackings: dict[str, dict[str, Any]],
+) -> dict[str, dict[str, Any]]:
+    """Return non-delivered trackings."""
+    return {
+        tracking_id: tracking
+        for tracking_id, tracking in trackings.items()
+        if tracking.get("last_status") != "delivered"
+    }
+
+
+def _compact_delivery(tracking_id: str, tracking: dict[str, Any]) -> dict[str, Any]:
+    """Return a compact delivery object suitable for automation attributes."""
+    stops = tracking_stops(tracking) or {}
+    return {
+        "id": tracking_id,
+        "title": tracking_title(tracking),
+        "tracking_number": tracking.get("trackingnumber"),
+        "carrier": tracking_carrier(tracking),
+        "status": tracking.get("last_status"),
+        "message": tracking.get("last_status_message"),
+        "scheduled_delivery": tracking.get("scheduleddeliverydate"),
+        "days_until_delivery": _days_until_delivery(tracking),
+        "carrier_url": tracking.get("carrierurl"),
+        "category_id": tracking.get("category_id"),
+        "stops_remaining": stops.get("remaining"),
+        "stops_message": stops.get("message"),
+    }

@@ -9,6 +9,7 @@ Custom Home Assistant integration for the documented ShipShow External API.
 - Supports every documented query option: category, search, status filter, limit, offset through pagination, sort field, and sort order
 - Automatic pagination up to a configurable page limit
 - Account summary sensors
+- Automation-friendly `Active Deliveries` overview sensor with current deliveries, next delivery, out-for-delivery list, exception flag, and carrier stop counts when ShipShow exposes them
 - Per-package status, message, delivery date, and days-until-delivery sensors
 - Per-package delivered, out-for-delivery, and exception binary sensors
 - Per-package delivery calendar entities
