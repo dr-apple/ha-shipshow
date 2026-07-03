@@ -11,7 +11,7 @@ from homeassistant.components.sensor import (
     SensorEntity,
     SensorEntityDescription,
 )
-from homeassistant.const import EntityCategory, UnitOfTime
+from homeassistant.const import UnitOfTime
 from homeassistant.core import HomeAssistant, callback
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
@@ -19,7 +19,7 @@ from . import ShipShowConfigEntry
 from .const import DOMAIN
 from .coordinator import ShipShowDataUpdateCoordinator
 from .helpers import (
-    ShipShowEntity,
+    ShipShowAccountEntity,
     ShipShowTrackingEntity,
     parse_date,
     tracking_carrier,
@@ -79,6 +79,21 @@ TRACKING_SENSOR_NAMES = {
     "last_status_message": "Letzte Meldung",
     "scheduled_delivery": "Geplante Lieferung",
     "days_until_delivery": "Tage bis Lieferung",
+}
+
+TRACKING_SENSOR_ROLES = {
+    "status": "status",
+    "last_status_message": "letzte_meldung",
+    "scheduled_delivery": "geplante_lieferung",
+    "days_until_delivery": "tage_bis_lieferung",
+}
+
+ACCOUNT_SENSOR_ROLES = {
+    "total": "pakete_gesamt",
+    "transit": "unterwegs",
+    "outfordelivery": "in_zustellung",
+    "delivered": "zugestellt",
+    "exception": "probleme",
 }
 
 
@@ -142,12 +157,11 @@ class ShipShowSensorManager:
             self.async_add_entities(entities)
 
 
-class ShipShowAccountSensor(ShipShowEntity, SensorEntity):
+class ShipShowAccountSensor(ShipShowAccountEntity, SensorEntity):
     """Account-level summary sensor."""
 
     _attr_icon = "mdi:package-variant"
     _attr_native_unit_of_measurement = "packages"
-    _attr_entity_category = EntityCategory.DIAGNOSTIC
 
     def __init__(
         self,
@@ -157,8 +171,10 @@ class ShipShowAccountSensor(ShipShowEntity, SensorEntity):
     ) -> None:
         super().__init__(coordinator)
         self.status_key = status_key
-        self._attr_name = name
+        self.role = ACCOUNT_SENSOR_ROLES.get(status_key, status_key)
+        self._attr_name = f"ShipShow {name}"
         self._attr_unique_id = f"{coordinator.config_entry.entry_id}_{status_key}"
+        self._attr_suggested_object_id = f"shipshow_{self.role}"
 
     @property
     def native_value(self) -> int:
@@ -171,12 +187,14 @@ class ShipShowAccountSensor(ShipShowEntity, SensorEntity):
     def extra_state_attributes(self) -> dict[str, Any]:
         """Return account details."""
         return {
+            **self.shipshow_attributes,
+            "shipshow_entity_role": self.role,
             "categories": list(self.coordinator.data.categories.values()),
             "has_more_data": self.coordinator.data.has_more_data,
         }
 
 
-class ShipShowActiveDeliveriesSensor(ShipShowEntity, SensorEntity):
+class ShipShowActiveDeliveriesSensor(ShipShowAccountEntity, SensorEntity):
     """Automation-friendly overview of current deliveries."""
 
     _attr_icon = "mdi:truck-delivery-outline"
@@ -184,8 +202,9 @@ class ShipShowActiveDeliveriesSensor(ShipShowEntity, SensorEntity):
 
     def __init__(self, coordinator: ShipShowDataUpdateCoordinator) -> None:
         super().__init__(coordinator)
-        self._attr_name = "Aktuelle Lieferungen"
+        self._attr_name = "ShipShow Aktuelle Lieferungen"
         self._attr_unique_id = f"{coordinator.config_entry.entry_id}_active_deliveries"
+        self._attr_suggested_object_id = "shipshow_aktuelle_lieferungen"
 
     @property
     def native_value(self) -> int:
@@ -198,6 +217,8 @@ class ShipShowActiveDeliveriesSensor(ShipShowEntity, SensorEntity):
         deliveries = _sorted_deliveries(self.coordinator.data.trackings)
         next_delivery = deliveries[0] if deliveries else None
         return {
+            **self.shipshow_attributes,
+            "shipshow_entity_role": "aktuelle_lieferungen",
             "lieferungen": deliveries,
             "naechste_lieferung": next_delivery,
             "in_zustellung": [
@@ -215,15 +236,16 @@ class ShipShowActiveDeliveriesSensor(ShipShowEntity, SensorEntity):
         }
 
 
-class ShipShowDeliveryOverviewSensor(ShipShowEntity, SensorEntity):
+class ShipShowDeliveryOverviewSensor(ShipShowAccountEntity, SensorEntity):
     """Human-readable current delivery overview."""
 
     _attr_icon = "mdi:clipboard-list-outline"
 
     def __init__(self, coordinator: ShipShowDataUpdateCoordinator) -> None:
         super().__init__(coordinator)
-        self._attr_name = "Lieferübersicht"
+        self._attr_name = "ShipShow Lieferübersicht"
         self._attr_unique_id = f"{coordinator.config_entry.entry_id}_delivery_overview"
+        self._attr_suggested_object_id = "shipshow_lieferuebersicht"
 
     @property
     def native_value(self) -> str:
@@ -241,6 +263,8 @@ class ShipShowDeliveryOverviewSensor(ShipShowEntity, SensorEntity):
         """Return the same automation-friendly overview as attributes."""
         deliveries = _sorted_deliveries(self.coordinator.data.trackings)
         return {
+            **self.shipshow_attributes,
+            "shipshow_entity_role": "lieferuebersicht",
             "aktive_lieferungen": len(deliveries),
             "lieferungen": deliveries,
             "naechste_lieferung": deliveries[0] if deliveries else None,
@@ -273,6 +297,8 @@ class ShipShowTrackingSensor(ShipShowTrackingEntity, SensorEntity):
         super().__init__(coordinator, tracking_id)
         self.entity_description = description
         self._attr_unique_id = f"{tracking_id}_{description.key}"
+        self.role = TRACKING_SENSOR_ROLES.get(description.key, description.key)
+        self._attr_suggested_object_id = self.tracking_object_id(self.role)
 
     @property
     def name(self) -> str:
@@ -281,7 +307,7 @@ class ShipShowTrackingSensor(ShipShowTrackingEntity, SensorEntity):
             self.entity_description.key,
             self.entity_description.key,
         )
-        return f"{tracking_title(self.tracking)} {label}"
+        return self.tracking_name(label)
 
     @property
     def native_value(self) -> Any:
@@ -292,8 +318,11 @@ class ShipShowTrackingSensor(ShipShowTrackingEntity, SensorEntity):
     def extra_state_attributes(self) -> dict[str, Any] | None:
         """Return additional details."""
         if self.entity_description.attrs_fn is None:
-            return None
-        return self.entity_description.attrs_fn(self.tracking)
+            return self.tracking_attributes(self.role)
+        return {
+            **self.tracking_attributes(self.role),
+            **self.entity_description.attrs_fn(self.tracking),
+        }
 
 
 def _days_until_delivery(tracking: dict[str, Any]) -> int | None:

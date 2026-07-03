@@ -15,7 +15,7 @@ from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
 from . import ShipShowConfigEntry
 from .coordinator import ShipShowDataUpdateCoordinator
-from .helpers import ShipShowTrackingEntity, tracking_title
+from .helpers import ShipShowTrackingEntity
 
 
 @dataclass(frozen=True, kw_only=True)
@@ -50,6 +50,12 @@ BINARY_SENSOR_NAMES = {
     "delivered": "Zugestellt",
     "out_for_delivery": "In Zustellung",
     "exception": "Problem",
+}
+
+BINARY_SENSOR_ROLES = {
+    "delivered": "zugestellt",
+    "out_for_delivery": "in_zustellung",
+    "exception": "problem",
 }
 
 
@@ -107,6 +113,8 @@ class ShipShowTrackingBinarySensor(ShipShowTrackingEntity, BinarySensorEntity):
         super().__init__(coordinator, tracking_id)
         self.entity_description = description
         self._attr_unique_id = f"{tracking_id}_{description.key}"
+        self.role = BINARY_SENSOR_ROLES.get(description.key, description.key)
+        self._attr_suggested_object_id = self.tracking_object_id(self.role)
 
     @property
     def name(self) -> str:
@@ -115,9 +123,14 @@ class ShipShowTrackingBinarySensor(ShipShowTrackingEntity, BinarySensorEntity):
             self.entity_description.key,
             self.entity_description.key,
         )
-        return f"{tracking_title(self.tracking)} {label}"
+        return self.tracking_name(label)
 
     @property
     def is_on(self) -> bool:
         """Return binary state."""
         return self.entity_description.value_fn(self.tracking)
+
+    @property
+    def extra_state_attributes(self) -> dict[str, Any]:
+        """Return dashboard-friendly grouping attributes."""
+        return self.tracking_attributes(self.role)

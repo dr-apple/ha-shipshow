@@ -1,42 +1,120 @@
-# ShipShow for Home Assistant
+# ShipShow für Home Assistant
 
-Custom Home Assistant integration for the documented ShipShow External API.
+Benutzerdefinierte Home-Assistant-Integration für die dokumentierte externe ShipShow-API.
 
-## Features
+## Funktionen
 
-- UI setup through Home Assistant config flow
-- Uses the public `GET /external/getTrackings` endpoint
-- Supports every documented query option: category, search, status filter, limit, offset through pagination, sort field, and sort order
-- Automatic pagination up to a configurable page limit
-- Account summary sensors
-- Automation-friendly `Active Deliveries` overview sensor with current deliveries, next delivery, out-for-delivery list, exception flag, and carrier stop counts when ShipShow exposes them
-- Per-package status, message, delivery date, and days-until-delivery sensors
-- Per-package delivered, out-for-delivery, and exception binary sensors
-- Per-package delivery calendar entities
-- Diagnostics with the API key redacted
-- HACS metadata and GitHub validation workflows
+- Einrichtung über den Home-Assistant-Konfigurationsdialog
+- Nutzt den öffentlichen Endpunkt `GET /external/getTrackings`
+- Unterstützt alle dokumentierten Abfrageoptionen: Kategorie, Suche, Statusfilter, Limit, Offset über Pagination, Sortierfeld und Sortierreihenfolge
+- Automatische Pagination bis zur konfigurierten Seitengrenze
+- Globale ShipShow-Entitäten an einem eigenen `ShipShow`-Gerät
+- Automationsfreundliche Sensoren `ShipShow Aktuelle Lieferungen` und `ShipShow Lieferübersicht`
+- Pro Sendung: Status, letzte Meldung, geplante Lieferung und Tage bis Lieferung
+- Pro Sendung: Binärsensoren für Zugestellt, In Zustellung und Problem
+- Pro Sendung: Kalender-Entitäten für geplante Liefertermine
+- Dashboard-Attribute für Auto Entities: `shipshow_scope`, `shipshow_dashboard_group`, `shipshow_entity_group`, `shipshow_entity_role`
+- Diagnose mit ausgeblendetem API-Schlüssel
+- HACS-Metadaten und GitHub-Validierungsworkflows
 
-## Requirements
+## Voraussetzungen
 
-- A ShipShow Pro subscription
-- An API key generated in the ShipShow mobile app under Settings > API Keys
+- ShipShow-Pro-Abo
+- API-Schlüssel aus der ShipShow-App unter Einstellungen > API-Schlüssel
 
-## Installation With HACS
+## Installation mit HACS
 
-1. Add this repository as a custom repository in HACS.
-2. Select category `Integration`.
-3. Install `ShipShow`.
-4. Restart Home Assistant.
-5. Go to Settings > Devices & Services > Add Integration > ShipShow.
+1. Dieses Repository in HACS als benutzerdefiniertes Repository hinzufügen.
+2. Kategorie `Integration` auswählen.
+3. `ShipShow` installieren.
+4. Home Assistant neu starten.
+5. Einstellungen > Geräte & Dienste > Integration hinzufügen > ShipShow öffnen.
 
-## API Notes
+## Namensschema
 
-The public API documentation at [shipshow.net/api](https://www.shipshow.net/api) documents:
+Globale Entitäten hängen am Gerät `ShipShow` und heißen zum Beispiel:
 
-- Base URL: `https://api.shipshow.net/external/`
-- Endpoint: `GET /external/getTrackings`
-- Authentication: `apikey` query parameter
-- Recommended polling: no more than one request per minute
-- Maximum page size: 50
+- `sensor.shipshow_lieferuebersicht`
+- `sensor.shipshow_aktuelle_lieferungen`
+- `sensor.shipshow_pakete_gesamt`
+- `sensor.shipshow_in_zustellung`
 
-This integration follows that public contract and does not use ShipShow's internal web-app endpoints.
+Neue Sendungs-Entitäten bekommen vorgeschlagene Entity-IDs nach diesem Schema:
+
+- `sensor.shipshow_lieferung_<sendungsnummer>_status`
+- `sensor.shipshow_lieferung_<sendungsnummer>_letzte_meldung`
+- `sensor.shipshow_lieferung_<sendungsnummer>_geplante_lieferung`
+- `sensor.shipshow_lieferung_<sendungsnummer>_tage_bis_lieferung`
+- `binary_sensor.shipshow_lieferung_<sendungsnummer>_zugestellt`
+- `binary_sensor.shipshow_lieferung_<sendungsnummer>_in_zustellung`
+- `binary_sensor.shipshow_lieferung_<sendungsnummer>_problem`
+
+Bestehende Entity-IDs benennt Home Assistant aus Sicherheitsgründen nicht automatisch um. Die neuen Attribute sind aber auch bei bestehenden Entitäten vorhanden.
+
+## Auto Entities
+
+Alle Sendungs-Entitäten tragen diese Attribute:
+
+- `shipshow_scope: lieferung`
+- `shipshow_dashboard_group: shipshow_lieferungen`
+- `shipshow_entity_group: shipshow_lieferung_<sendungsnummer>`
+- `shipshow_entity_role: status`, `letzte_meldung`, `geplante_lieferung`, `tage_bis_lieferung`, `zugestellt`, `in_zustellung` oder `problem`
+
+Beispiel für eine Auto-Entities-Karte, die alle Sendungs-Entitäten automatisch einsammelt:
+
+```yaml
+type: custom:auto-entities
+card:
+  type: entities
+  title: ShipShow Lieferungen
+filter:
+  include:
+    - attributes:
+        shipshow_dashboard_group: shipshow_lieferungen
+sort:
+  method: attribute
+  attribute: shipshow_entity_group
+```
+
+Beispiel für nur die Status-Sensoren aller Sendungen:
+
+```yaml
+type: custom:auto-entities
+card:
+  type: entities
+  title: ShipShow Status
+filter:
+  include:
+    - attributes:
+        shipshow_dashboard_group: shipshow_lieferungen
+        shipshow_entity_role: status
+sort:
+  method: name
+```
+
+Globale ShipShow-Entitäten lassen sich so sammeln:
+
+```yaml
+type: custom:auto-entities
+card:
+  type: entities
+  title: ShipShow Übersicht
+filter:
+  include:
+    - attributes:
+        shipshow_dashboard_group: shipshow_global
+sort:
+  method: name
+```
+
+## API-Hinweise
+
+Die öffentliche API-Dokumentation unter [shipshow.net/api](https://www.shipshow.net/api) dokumentiert:
+
+- Basis-URL: `https://api.shipshow.net/external/`
+- Endpunkt: `GET /external/getTrackings`
+- Authentifizierung: Query-Parameter `apikey`
+- Empfohlenes Abrufintervall: nicht öfter als einmal pro Minute
+- Maximale Seitengröße: 50
+
+Diese Integration folgt dem öffentlichen API-Vertrag und nutzt keine internen ShipShow-Web-App-Endpunkte.
