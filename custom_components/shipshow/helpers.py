@@ -8,6 +8,7 @@ from typing import Any
 
 from homeassistant.helpers.device_registry import DeviceInfo
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
+from homeassistant.util import slugify
 
 from .const import DOMAIN
 from .coordinator import ShipShowDataUpdateCoordinator
@@ -17,6 +18,28 @@ class ShipShowEntity(CoordinatorEntity[ShipShowDataUpdateCoordinator]):
     """Base ShipShow entity."""
 
     _attr_has_entity_name = False
+
+
+class ShipShowAccountEntity(ShipShowEntity):
+    """Base entity for global ShipShow account data."""
+
+    @property
+    def device_info(self) -> DeviceInfo:
+        """Return global ShipShow device info."""
+        return DeviceInfo(
+            identifiers={(DOMAIN, self.coordinator.config_entry.entry_id)},
+            name="ShipShow",
+            manufacturer="ShipShow",
+            configuration_url="https://www.shipshow.net",
+        )
+
+    @property
+    def shipshow_attributes(self) -> dict[str, Any]:
+        """Return attributes used by dashboards and automations."""
+        return {
+            "shipshow_scope": "global",
+            "shipshow_dashboard_group": "shipshow_global",
+        }
 
 
 class ShipShowTrackingEntity(ShipShowEntity):
@@ -50,6 +73,29 @@ class ShipShowTrackingEntity(ShipShowEntity):
             configuration_url=tracking.get("carrierurl"),
         )
 
+    def tracking_object_id(self, role: str) -> str:
+        """Return a stable suggested entity object id."""
+        return f"shipshow_lieferung_{tracking_slug(self.tracking_id, self.tracking)}_{role}"
+
+    def tracking_name(self, label: str) -> str:
+        """Return a consistent dashboard-friendly tracking entity name."""
+        return f"ShipShow Lieferung {tracking_title(self.tracking)} - {label}"
+
+    def tracking_attributes(self, role: str) -> dict[str, Any]:
+        """Return attributes used by dashboards and automations."""
+        tracking = self.tracking
+        group = f"shipshow_lieferung_{tracking_slug(self.tracking_id, tracking)}"
+        return {
+            "shipshow_scope": "lieferung",
+            "shipshow_dashboard_group": "shipshow_lieferungen",
+            "shipshow_entity_group": group,
+            "shipshow_entity_role": role,
+            "shipshow_tracking_id": self.tracking_id,
+            "shipshow_sendungsnummer": tracking.get("trackingnumber"),
+            "shipshow_titel": tracking_title(tracking),
+            "shipshow_dienstleister": tracking_carrier(tracking),
+        }
+
 
 def tracking_title(tracking: dict[str, Any]) -> str:
     """Return the best human-readable package title."""
@@ -66,6 +112,12 @@ def tracking_carrier(tracking: dict[str, Any]) -> str | None:
     """Return carrier name or id."""
     carrier = tracking.get("carrier") or {}
     return carrier.get("name") or carrier.get("id")
+
+
+def tracking_slug(tracking_id: str, tracking: dict[str, Any]) -> str:
+    """Return a stable slug for tracking entity ids and grouping."""
+    reference = tracking.get("trackingnumber") or tracking_id
+    return slugify(str(reference)) or slugify(str(tracking_id)) or "unbekannt"
 
 
 def tracking_stops(tracking: dict[str, Any]) -> dict[str, Any] | None:

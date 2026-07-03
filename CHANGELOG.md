@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.5.0
+
+- Add a global `ShipShow` device for account-level entities such as `ShipShow Lieferübersicht` and `ShipShow Aktuelle Lieferungen`.
+- Introduce dashboard-friendly tracking names in the form `ShipShow Lieferung <Titel> - <Feld>`.
+- Add Auto Entities attributes to every delivery entity: `shipshow_scope`, `shipshow_dashboard_group`, `shipshow_entity_group`, and `shipshow_entity_role`.
+- Suggest stable entity ids for new deliveries, for example `sensor.shipshow_lieferung_<sendungsnummer>_status`.
+- Document German naming and Auto Entities examples in the README.
+
 ## 0.4.0
 
 - Show all active deliveries directly in the visible `Lieferübersicht` sensor state.
