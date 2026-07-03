@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.9.0
+
+- Add a per-delivery `Übersicht` sensor as the dashboard click target.
+- Include compact shipment state plus full shipment attributes, including raw ShipShow payload, in the `Übersicht` sensor.
+- Update Auto Entities examples to show delivery overview rows instead of status-only rows.
+
 ## 0.8.0
 
 - Fix duplicated delivery names in dashboard rows by letting the delivery device provide the package name and the entity provide only the field name.

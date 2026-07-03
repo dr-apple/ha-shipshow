@@ -46,5 +46,35 @@
         }
       }
     }
+  },
+  "entity": {
+    "sensor": {
+      "overview": {
+        "name": "Übersicht"
+      },
+      "status": {
+        "name": "Status"
+      },
+      "last_status_message": {
+        "name": "Letzte Meldung"
+      },
+      "scheduled_delivery": {
+        "name": "Geplante Lieferung"
+      },
+      "days_until_delivery": {
+        "name": "Tage bis Lieferung"
+      }
+    },
+    "binary_sensor": {
+      "delivered": {
+        "name": "Zugestellt"
+      },
+      "out_for_delivery": {
+        "name": "In Zustellung"
+      },
+      "exception": {
+        "name": "Problem"
+      }
+    }
   }
 }

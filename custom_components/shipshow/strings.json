@@ -48,10 +48,13 @@
     }
   },
   "entity": {
-    "sensor": {
-      "status": {
-        "name": "Status"
-      },
+        "sensor": {
+          "overview": {
+            "name": "Übersicht"
+          },
+          "status": {
+            "name": "Status"
+          },
       "last_status_message": {
         "name": "Letzte Meldung"
       },
