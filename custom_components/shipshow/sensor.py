@@ -16,7 +16,12 @@ from homeassistant.core import HomeAssistant, callback
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
 from . import ShipShowConfigEntry
-from .const import DOMAIN
+from .const import (
+    CONF_SCAN_INTERVAL,
+    DEFAULT_SCAN_INTERVAL,
+    DOMAIN,
+    MIN_SCAN_INTERVAL,
+)
 from .coordinator import ShipShowDataUpdateCoordinator
 from .helpers import (
     ShipShowAccountEntity,
@@ -132,6 +137,7 @@ class ShipShowSensorManager:
                     ShipShowAccountSensor(self.coordinator, "total", "Pakete gesamt"),
                     ShipShowActiveDeliveriesSensor(self.coordinator),
                     ShipShowDeliveryOverviewSensor(self.coordinator),
+                    ShipShowScanIntervalSensor(self.coordinator),
                     ShipShowAccountSensor(self.coordinator, "transit", "Unterwegs"),
                     ShipShowAccountSensor(
                         self.coordinator,
@@ -283,6 +289,34 @@ class ShipShowDeliveryOverviewSensor(ShipShowAccountEntity, SensorEntity):
         }
 
 
+class ShipShowScanIntervalSensor(ShipShowAccountEntity, SensorEntity):
+    """Currently configured polling interval."""
+
+    _attr_icon = "mdi:timer-sync-outline"
+    _attr_device_class = SensorDeviceClass.DURATION
+    _attr_native_unit_of_measurement = UnitOfTime.SECONDS
+
+    def __init__(self, coordinator: ShipShowDataUpdateCoordinator) -> None:
+        super().__init__(coordinator)
+        self._attr_name = "ShipShow Abrufintervall"
+        self._attr_unique_id = f"{coordinator.config_entry.entry_id}_scan_interval"
+        self._attr_suggested_object_id = "shipshow_abrufintervall"
+
+    @property
+    def native_value(self) -> int:
+        """Return active polling interval in seconds."""
+        return _scan_interval(self.coordinator)
+
+    @property
+    def extra_state_attributes(self) -> dict[str, Any]:
+        """Return interval details."""
+        return {
+            **self.shipshow_attributes,
+            "shipshow_entity_role": "abrufintervall",
+            "minimum_sekunden": MIN_SCAN_INTERVAL,
+        }
+
+
 class ShipShowTrackingSensor(ShipShowTrackingEntity, SensorEntity):
     """Tracking detail sensor."""
 
@@ -331,6 +365,19 @@ def _days_until_delivery(tracking: dict[str, Any]) -> int | None:
     if delivery_date is None:
         return None
     return (delivery_date - date.today()).days
+
+
+def _scan_interval(coordinator: ShipShowDataUpdateCoordinator) -> int:
+    """Return configured polling interval clamped to the supported minimum."""
+    return max(
+        MIN_SCAN_INTERVAL,
+        int(
+            coordinator.config_entry.options.get(
+                CONF_SCAN_INTERVAL,
+                DEFAULT_SCAN_INTERVAL,
+            )
+        ),
+    )
 
 
 def _status_label(status: Any) -> str | None:

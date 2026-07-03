@@ -31,7 +31,18 @@
           "sort_by": "Sortieren nach",
           "sort_order": "Sortierreihenfolge",
           "include_delivered": "Zugestellte Pakete einschließen",
-          "scan_interval": "Abrufintervall in Sekunden"
+          "scan_interval": "Abrufintervall"
+        },
+        "data_description": {
+          "category_id": "Optional: Nur Sendungen aus dieser ShipShow-Kategorie abrufen.",
+          "search": "Optional: Sendungen nach Text suchen.",
+          "status_filter": "Optional: Nur Sendungen mit diesem Status abrufen.",
+          "limit": "Anzahl der Ergebnisse pro API-Seite. ShipShow erlaubt maximal 50.",
+          "max_pages": "Wie viele API-Seiten pro Abruf geladen werden dürfen.",
+          "sort_by": "Feld, nach dem ShipShow die Sendungen sortiert.",
+          "sort_order": "Sortierreihenfolge für die ShipShow-Abfrage.",
+          "include_delivered": "Wenn deaktiviert, werden zugestellte Sendungen aus Home Assistant ausgeblendet.",
+          "scan_interval": "Zeit zwischen zwei API-Abrufen in Sekunden. Mindestwert: 60 Sekunden."
         }
       }
     }
