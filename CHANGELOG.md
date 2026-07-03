@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.6.0
+
+- Make the polling interval option clearer in Home Assistant with German descriptions and the 60-second minimum.
+- Add a global `ShipShow Abrufintervall` sensor that shows the currently active polling interval in seconds.
+- Document where to change the polling interval in Home Assistant.
+
 ## 0.5.0
 
 - Add a global `ShipShow` device for account-level entities such as `ShipShow Lieferübersicht` and `ShipShow Aktuelle Lieferungen`.

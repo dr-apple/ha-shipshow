@@ -30,6 +30,14 @@ Benutzerdefinierte Home-Assistant-Integration für die dokumentierte externe Shi
 4. Home Assistant neu starten.
 5. Einstellungen > Geräte & Dienste > Integration hinzufügen > ShipShow öffnen.
 
+## Optionen
+
+Das Abrufintervall stellst du in Home Assistant hier ein:
+
+Einstellungen > Geräte & Dienste > ShipShow > Konfigurieren > Abrufintervall
+
+Der Wert wird in Sekunden angegeben. Der Mindestwert ist 60 Sekunden, passend zur Empfehlung der öffentlichen ShipShow-API. Nach dem Speichern lädt Home Assistant die Integration neu und der globale Sensor `ShipShow Abrufintervall` zeigt den aktiven Wert an.
+
 ## Namensschema
 
 Globale Entitäten hängen am Gerät `ShipShow` und heißen zum Beispiel:
@@ -38,6 +46,7 @@ Globale Entitäten hängen am Gerät `ShipShow` und heißen zum Beispiel:
 - `sensor.shipshow_aktuelle_lieferungen`
 - `sensor.shipshow_pakete_gesamt`
 - `sensor.shipshow_in_zustellung`
+- `sensor.shipshow_abrufintervall`
 
 Neue Sendungs-Entitäten bekommen vorgeschlagene Entity-IDs nach diesem Schema:
 
