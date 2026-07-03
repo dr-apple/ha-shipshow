@@ -116,6 +116,38 @@ sort:
   method: name
 ```
 
+## Push-Automation für Zustellung und Stopps
+
+Die Integration feuert Home-Assistant-Events, damit eine einzige Automation für alle aktuellen und zukünftigen Sendungen reicht.
+
+Events:
+
+- `shipshow_lieferung_in_zustellung`: Wird ausgelöst, wenn eine Sendung in Zustellung geht.
+- `shipshow_stopps_weniger`: Wird ausgelöst, wenn die verbleibenden Stopps kleiner werden.
+
+Event-Daten:
+
+- `titel`
+- `sendungsnummer`
+- `dienstleister`
+- `status`
+- `meldung`
+- `sendungsverfolgung_url`
+- `stopps_verbleibend`
+- `vorherige_stopps` beim Event `shipshow_stopps_weniger`
+- `benachrichtigung`: fertiger deutscher Push-Text
+
+In Home Assistant legst du eine Automation mit zwei Event-Triggern an:
+
+1. Einstellungen > Automationen & Szenen > Automation erstellen.
+2. Trigger `Event` auswählen.
+3. Event-Typ `shipshow_lieferung_in_zustellung` hinzufügen.
+4. Zweiten Event-Trigger mit `shipshow_stopps_weniger` hinzufügen.
+5. Als Aktion deinen Mobile-App-Benachrichtigungsdienst auswählen.
+6. Als Nachricht kannst du `trigger.event.data.benachrichtigung` verwenden.
+
+DHL- und Amazon-Stopps werden nur gemeldet, wenn ShipShow diese Informationen in der öffentlichen API-Antwort mitliefert. Die Integration durchsucht Carrier-Metadaten, Lieferfortschrittsmeldungen und die neuesten Verlaufseinträge nach Stopps.
+
 ## API-Hinweise
 
 Die öffentliche API-Dokumentation unter [shipshow.net/api](https://www.shipshow.net/api) dokumentiert:

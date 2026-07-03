@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.7.0
+
+- Fire `shipshow_lieferung_in_zustellung` when a delivery enters out-for-delivery status.
+- Fire `shipshow_stopps_weniger` when the remaining stop count decreases.
+- Include delivery title, tracking number, carrier, tracking URL, message, remaining stops, and previous stops in event data where available.
+- Include a ready-to-send German `benachrichtigung` text in delivery event data.
+- Document the event-based push notification automation setup.
+
 ## 0.6.0
 
 - Make the polling interval option clearer in Home Assistant with German descriptions and the 60-second minimum.

@@ -6,6 +6,9 @@ from datetime import timedelta
 
 DOMAIN = "shipshow"
 
+EVENT_DELIVERY_OUT_FOR_DELIVERY = "shipshow_lieferung_in_zustellung"
+EVENT_STOPS_DECREASED = "shipshow_stopps_weniger"
+
 DEFAULT_API_BASE_URL = "https://api.shipshow.net/external/"
 DEFAULT_LIMIT = 50
 DEFAULT_MAX_PAGES = 10
