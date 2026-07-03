@@ -6,6 +6,7 @@ from collections import Counter
 from dataclasses import dataclass
 from datetime import timedelta
 import logging
+import re
 from typing import Any
 
 from homeassistant.config_entries import ConfigEntry
@@ -30,6 +31,8 @@ from .const import (
     DEFAULT_SORT_BY,
     DEFAULT_SORT_ORDER,
     DOMAIN,
+    EVENT_DELIVERY_OUT_FOR_DELIVERY,
+    EVENT_STOPS_DECREASED,
     MIN_SCAN_INTERVAL,
 )
 
@@ -110,12 +113,53 @@ class ShipShowDataUpdateCoordinator(DataUpdateCoordinator[ShipShowData]):
             for tracking in trackings.values()
         )
 
-        return ShipShowData(
+        data = ShipShowData(
             trackings=trackings,
             categories=categories,
             status_counts=status_counts,
             has_more_data=page.has_more_data,
         )
+        self._async_fire_delivery_events(data)
+        return data
+
+    def _async_fire_delivery_events(self, data: ShipShowData) -> None:
+        """Fire Home Assistant events for delivery status and stop updates."""
+        previous_data = getattr(self, "data", None)
+        previous_trackings = previous_data.trackings if previous_data else {}
+
+        for tracking_id, tracking in data.trackings.items():
+            previous = previous_trackings.get(tracking_id)
+            status = tracking.get("last_status")
+            previous_status = previous.get("last_status") if previous else None
+            stops = _tracking_stop_count(tracking)
+            previous_stops = _tracking_stop_count(previous) if previous else None
+
+            if status == "outfordelivery" and previous_status != "outfordelivery":
+                self.hass.bus.async_fire(
+                    EVENT_DELIVERY_OUT_FOR_DELIVERY,
+                    _delivery_event_data(
+                        tracking_id,
+                        tracking,
+                        stops,
+                        event_kind="in_zustellung",
+                    ),
+                )
+
+            if (
+                stops is not None
+                and previous_stops is not None
+                and stops < previous_stops
+            ):
+                self.hass.bus.async_fire(
+                    EVENT_STOPS_DECREASED,
+                    _delivery_event_data(
+                        tracking_id,
+                        tracking,
+                        stops,
+                        event_kind="stopps_weniger",
+                        previous_stops=previous_stops,
+                    ),
+                )
 
 
 def _empty_to_none(value: Any) -> str | None:
@@ -124,3 +168,125 @@ def _empty_to_none(value: Any) -> str | None:
         return None
     value = str(value).strip()
     return value or None
+
+
+def _delivery_event_data(
+    tracking_id: str,
+    tracking: dict[str, Any],
+    stops: int | None,
+    *,
+    event_kind: str,
+    previous_stops: int | None = None,
+) -> dict[str, Any]:
+    """Return event data for delivery automations."""
+    title = _tracking_title(tracking)
+    data = {
+        "ereignis": event_kind,
+        "tracking_id": tracking_id,
+        "titel": title,
+        "sendungsnummer": tracking.get("trackingnumber"),
+        "dienstleister": _tracking_carrier(tracking),
+        "status": tracking.get("last_status"),
+        "meldung": tracking.get("last_status_message"),
+        "sendungsverfolgung_url": tracking.get("carrierurl"),
+        "stopps_verbleibend": stops,
+    }
+    if previous_stops is not None:
+        data["vorherige_stopps"] = previous_stops
+    data["benachrichtigung"] = _notification_text(title, stops, previous_stops)
+    return data
+
+
+def _notification_text(
+    title: str,
+    stops: int | None,
+    previous_stops: int | None,
+) -> str:
+    """Return a ready-to-send German notification message."""
+    if previous_stops is not None and stops is not None:
+        return f"{title}: noch {stops} Stopps (vorher {previous_stops})."
+    if stops is not None:
+        return f"{title} ist in Zustellung. Noch {stops} Stopps."
+    return f"{title} ist in Zustellung."
+
+
+def _tracking_title(tracking: dict[str, Any]) -> str:
+    """Return the best human-readable package title."""
+    return str(
+        tracking.get("title")
+        or tracking.get("shorttitle")
+        or tracking.get("longtitle")
+        or tracking.get("trackingnumber")
+        or "Paket"
+    )
+
+
+def _tracking_carrier(tracking: dict[str, Any]) -> str | None:
+    """Return carrier name or id."""
+    carrier = tracking.get("carrier") or {}
+    return carrier.get("name") or carrier.get("id")
+
+
+def _tracking_stop_count(tracking: dict[str, Any] | None) -> int | None:
+    """Extract remaining delivery stops from carrier metadata when available."""
+    if not tracking:
+        return None
+
+    candidates: list[tuple[str, Any]] = []
+    for field in ("extra", "config"):
+        candidates.extend(_walk_values(tracking.get(field), field))
+
+    for field in (
+        "deliveryprogressmessage",
+        "deliveryProgressMessage",
+        "last_status_message",
+        "last_status",
+    ):
+        if value := tracking.get(field):
+            candidates.append((field, value))
+
+    history = tracking.get("history") or []
+    if isinstance(history, list):
+        for index, item in enumerate(history[:3]):
+            candidates.extend(_walk_values(item, f"history[{index}]"))
+
+    for path, value in candidates:
+        normalized_path = path.lower().replace("_", "")
+        if isinstance(value, int) and "stop" in normalized_path:
+            return value
+        if isinstance(value, str):
+            number = _extract_stop_count(value)
+            if number is not None:
+                return number
+
+    return None
+
+
+def _walk_values(value: Any, path: str) -> list[tuple[str, Any]]:
+    """Flatten dict/list values with paths."""
+    if isinstance(value, dict):
+        values: list[tuple[str, Any]] = []
+        for key, item in value.items():
+            child_path = f"{path}.{key}"
+            values.append((child_path, item))
+            values.extend(_walk_values(item, child_path))
+        return values
+    if isinstance(value, list):
+        values = []
+        for index, item in enumerate(value):
+            values.extend(_walk_values(item, f"{path}[{index}]"))
+        return values
+    return []
+
+
+def _extract_stop_count(value: str) -> int | None:
+    """Extract a stop count from English/German carrier messages."""
+    lowered = value.lower()
+    patterns = [
+        r"(\d+)\s*(?:stops?|stopps?|stationen?)",
+        r"(?:stops?|stopps?|stationen?)\D{0,12}(\d+)",
+    ]
+    for pattern in patterns:
+        if match := re.search(pattern, lowered):
+            return int(match.group(1))
+    return None
