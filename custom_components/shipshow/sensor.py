@@ -43,6 +43,13 @@ class ShipShowTrackingSensorDescription(SensorEntityDescription):
 
 TRACKING_SENSOR_DESCRIPTIONS = [
     ShipShowTrackingSensorDescription(
+        key="overview",
+        translation_key="overview",
+        icon="mdi:clipboard-text-outline",
+        value_fn=lambda tracking: _tracking_summary(tracking),
+        attrs_fn=lambda tracking: _tracking_overview_attributes(tracking),
+    ),
+    ShipShowTrackingSensorDescription(
         key="status",
         translation_key="status",
         icon="mdi:package-variant-closed",
@@ -80,6 +87,7 @@ TRACKING_SENSOR_DESCRIPTIONS = [
 ]
 
 TRACKING_SENSOR_NAMES = {
+    "overview": "Übersicht",
     "status": "Status",
     "last_status_message": "Letzte Meldung",
     "scheduled_delivery": "Geplante Lieferung",
@@ -87,6 +95,7 @@ TRACKING_SENSOR_NAMES = {
 }
 
 TRACKING_SENSOR_ROLES = {
+    "overview": "uebersicht",
     "status": "status",
     "last_status_message": "letzte_meldung",
     "scheduled_delivery": "geplante_lieferung",
@@ -395,6 +404,35 @@ def _status_label(status: Any) -> str | None:
         "pending": "Ausstehend",
         "undelivered": "Nicht zugestellt",
     }.get(str(status), str(status))
+
+
+def _tracking_summary(tracking: dict[str, Any]) -> str:
+    """Return a concise shipment summary for dashboard rows."""
+    compact = _compact_delivery("", tracking)
+    return _truncate_state(_delivery_overview_line(compact))
+
+
+def _tracking_overview_attributes(tracking: dict[str, Any]) -> dict[str, Any]:
+    """Return all shipment details for the more-info dialog."""
+    compact = _compact_delivery("", tracking)
+    return {
+        "titel": compact["titel"],
+        "sendungsnummer": compact["sendungsnummer"],
+        "dienstleister": compact["dienstleister"],
+        "status": compact["status"],
+        "status_code": compact["status_code"],
+        "meldung": compact["meldung"],
+        "geplante_lieferung": compact["geplante_lieferung"],
+        "tage_bis_lieferung": compact["tage_bis_lieferung"],
+        "sendungsverfolgung_url": compact["sendungsverfolgung_url"],
+        "kategorie_id": compact["kategorie_id"],
+        "stopps_verbleibend": compact["stopps_verbleibend"],
+        "stopp_meldung": compact["stopp_meldung"],
+        "kommentare": tracking.get("comments"),
+        "medien": tracking.get("media"),
+        "verlauf": tracking.get("history"),
+        "rohdaten": tracking,
+    }
 
 
 def _active_trackings(

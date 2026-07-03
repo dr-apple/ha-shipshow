@@ -51,6 +51,7 @@ Globale Entitäten hängen am Gerät `ShipShow` und heißen zum Beispiel:
 Neue Sendungs-Entitäten bekommen vorgeschlagene Entity-IDs nach diesem Schema:
 
 - `sensor.shipshow_lieferung_<sendungsnummer>_status`
+- `sensor.shipshow_lieferung_<sendungsnummer>_uebersicht`
 - `sensor.shipshow_lieferung_<sendungsnummer>_letzte_meldung`
 - `sensor.shipshow_lieferung_<sendungsnummer>_geplante_lieferung`
 - `sensor.shipshow_lieferung_<sendungsnummer>_tage_bis_lieferung`
@@ -69,7 +70,7 @@ Alle Sendungs-Entitäten tragen diese Attribute:
 - `shipshow_scope: lieferung`
 - `shipshow_dashboard_group: shipshow_lieferungen`
 - `shipshow_entity_group: shipshow_lieferung_<sendungsnummer>`
-- `shipshow_entity_role: status`, `letzte_meldung`, `geplante_lieferung`, `tage_bis_lieferung`, `zugestellt`, `in_zustellung` oder `problem`
+- `shipshow_entity_role: uebersicht`, `status`, `letzte_meldung`, `geplante_lieferung`, `tage_bis_lieferung`, `zugestellt`, `in_zustellung` oder `problem`
 
 Beispiel für eine Auto-Entities-Karte, die alle Sendungs-Entitäten automatisch einsammelt:
 
@@ -87,19 +88,19 @@ sort:
   attribute: shipshow_entity_group
 ```
 
-Beispiel für nur die Status-Sensoren aller Sendungen:
+Beispiel für eine klickbare Sendungsübersicht:
 
 ```yaml
 type: custom:auto-entities
 card:
   type: entities
-  title: ShipShow Status
+  title: ShipShow Lieferungen
   show_header_toggle: false
 filter:
   include:
     - attributes:
         shipshow_dashboard_group: shipshow_lieferungen
-        shipshow_entity_role: status
+        shipshow_entity_role: uebersicht
       options:
         secondary_info: last-changed
         tap_action:
@@ -110,7 +111,7 @@ sort:
   method: name
 ```
 
-Beim Klick auf eine Sendung öffnet Home Assistant das Detailfenster des Status-Sensors. Dort stehen die Sendungsdetails als Attribute, unter anderem `meldung`, `sendungsnummer`, `sendungsverfolgung_url`, `verlauf` und `stopps`, wenn ShipShow diese Daten liefert.
+Beim Klick auf eine Sendung öffnet Home Assistant das Detailfenster des `Übersicht`-Sensors. Dort stehen die Sendungsdetails als Attribute, unter anderem `meldung`, `sendungsnummer`, `sendungsverfolgung_url`, `verlauf`, `stopps` und `rohdaten`, wenn ShipShow diese Daten liefert.
 
 Globale ShipShow-Entitäten lassen sich so sammeln:
 
