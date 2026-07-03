@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.0.0
+
+- Fix the ShipShow options flow so the configuration menu opens reliably on newer Home Assistant versions.
+
 ## 0.9.0
 
 - Add a per-delivery `Übersicht` sensor as the dashboard click target.

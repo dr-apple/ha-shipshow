@@ -98,7 +98,7 @@ class ShipShowOptionsFlow(config_entries.OptionsFlow):
     """Handle ShipShow options."""
 
     def __init__(self, config_entry: config_entries.ConfigEntry) -> None:
-        self.config_entry = config_entry
+        self._config_entry = config_entry
 
     async def async_step_init(
         self, user_input: dict[str, Any] | None = None
@@ -107,7 +107,7 @@ class ShipShowOptionsFlow(config_entries.OptionsFlow):
         if user_input is not None:
             return self.async_create_entry(title="", data=user_input)
 
-        options = {**_default_options(), **self.config_entry.options}
+        options = {**_default_options(), **self._config_entry.options}
         return self.async_show_form(
             step_id="init",
             data_schema=vol.Schema(
