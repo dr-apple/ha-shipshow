@@ -45,6 +45,8 @@ class ShipShowAccountEntity(ShipShowEntity):
 class ShipShowTrackingEntity(ShipShowEntity):
     """Base entity tied to one tracking."""
 
+    _attr_has_entity_name = True
+
     def __init__(self, coordinator: ShipShowDataUpdateCoordinator, tracking_id: str) -> None:
         super().__init__(coordinator)
         self.tracking_id = tracking_id
@@ -78,8 +80,8 @@ class ShipShowTrackingEntity(ShipShowEntity):
         return f"shipshow_lieferung_{tracking_slug(self.tracking_id, self.tracking)}_{role}"
 
     def tracking_name(self, label: str) -> str:
-        """Return a consistent dashboard-friendly tracking entity name."""
-        return f"ShipShow Lieferung {tracking_title(self.tracking)} - {label}"
+        """Return the entity name that is appended to the delivery device name."""
+        return label
 
     def tracking_attributes(self, role: str) -> dict[str, Any]:
         """Return attributes used by dashboards and automations."""
