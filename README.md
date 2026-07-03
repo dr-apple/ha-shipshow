@@ -60,6 +60,8 @@ Neue Sendungs-Entitäten bekommen vorgeschlagene Entity-IDs nach diesem Schema:
 
 Bestehende Entity-IDs benennt Home Assistant aus Sicherheitsgründen nicht automatisch um. Die neuen Attribute sind aber auch bei bestehenden Entitäten vorhanden.
 
+In Home Assistant ist jede Sendung ein eigenes Gerät. Die Entitäten heißen innerhalb der Sendung nur noch `Status`, `Letzte Meldung`, `Geplante Lieferung` usw. Dadurch vermeidet die Oberfläche doppelte Namen wie `AirTag Joybuy ShipShow Lieferung AirTag Joybuy ...`.
+
 ## Auto Entities
 
 Alle Sendungs-Entitäten tragen diese Attribute:
@@ -92,14 +94,23 @@ type: custom:auto-entities
 card:
   type: entities
   title: ShipShow Status
+  show_header_toggle: false
 filter:
   include:
     - attributes:
         shipshow_dashboard_group: shipshow_lieferungen
         shipshow_entity_role: status
+      options:
+        secondary_info: last-changed
+        tap_action:
+          action: more-info
+  exclude:
+    - state: unavailable
 sort:
   method: name
 ```
+
+Beim Klick auf eine Sendung öffnet Home Assistant das Detailfenster des Status-Sensors. Dort stehen die Sendungsdetails als Attribute, unter anderem `meldung`, `sendungsnummer`, `sendungsverfolgung_url`, `verlauf` und `stopps`, wenn ShipShow diese Daten liefert.
 
 Globale ShipShow-Entitäten lassen sich so sammeln:
 

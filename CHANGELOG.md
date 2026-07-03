@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.8.0
+
+- Fix duplicated delivery names in dashboard rows by letting the delivery device provide the package name and the entity provide only the field name.
+- Keep status sensor attributes as the detailed shipment popup target for dashboard `more-info` actions.
+
 ## 0.7.0
 
 - Fire `shipshow_lieferung_in_zustellung` when a delivery enters out-for-delivery status.
