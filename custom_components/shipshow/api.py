@@ -2,11 +2,11 @@
 
 from __future__ import annotations
 
+from asyncio import timeout as asyncio_timeout
 from dataclasses import dataclass, field
 from typing import Any
 
 import aiohttp
-import async_timeout
 
 from .const import DEFAULT_API_BASE_URL, DEFAULT_LIMIT
 
@@ -82,7 +82,7 @@ class ShipShowClient:
         """Fetch one page of trackings."""
         url = f"{self._api_base_url}getTrackings"
         try:
-            async with async_timeout.timeout(self._timeout):
+            async with asyncio_timeout(self._timeout):
                 response = await self._session.get(
                     url,
                     params=query.as_params(self._api_key),

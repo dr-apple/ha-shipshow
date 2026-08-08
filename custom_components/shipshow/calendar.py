@@ -7,7 +7,7 @@ from typing import Any
 
 from homeassistant.components.calendar import CalendarEntity, CalendarEvent
 from homeassistant.core import HomeAssistant, callback
-from homeassistant.helpers.entity_platform import AddEntitiesCallback
+from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 from homeassistant.util import dt as dt_util
 
 from . import ShipShowConfigEntry
@@ -18,7 +18,7 @@ from .helpers import ShipShowTrackingEntity, parse_date, parse_datetime, trackin
 async def async_setup_entry(
     hass: HomeAssistant,
     entry: ShipShowConfigEntry,
-    async_add_entities: AddEntitiesCallback,
+    async_add_entities: AddConfigEntryEntitiesCallback,
 ) -> None:
     """Set up ShipShow calendars."""
     coordinator = entry.runtime_data
@@ -33,7 +33,7 @@ class ShipShowCalendarManager:
     def __init__(
         self,
         coordinator: ShipShowDataUpdateCoordinator,
-        async_add_entities: AddEntitiesCallback,
+        async_add_entities: AddConfigEntryEntitiesCallback,
     ) -> None:
         self.coordinator = coordinator
         self.async_add_entities = async_add_entities
@@ -65,7 +65,9 @@ class ShipShowDeliveryCalendar(ShipShowTrackingEntity, CalendarEntity):
         tracking_id: str,
     ) -> None:
         super().__init__(coordinator, tracking_id)
-        self._attr_unique_id = f"{tracking_id}_delivery_calendar"
+        self._attr_unique_id = (
+            f"{coordinator.config_entry.entry_id}_{tracking_id}_delivery_calendar"
+        )
 
     @property
     def name(self) -> str:

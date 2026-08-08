@@ -2,11 +2,11 @@
 
 from __future__ import annotations
 
+import logging
+import re
 from collections import Counter
 from dataclasses import dataclass
 from datetime import timedelta
-import logging
-import re
 from typing import Any
 
 from homeassistant.config_entries import ConfigEntry
@@ -104,13 +104,10 @@ class ShipShowDataUpdateCoordinator(DataUpdateCoordinator[ShipShowData]):
             trackings[unique_id] = tracking
 
         categories = {
-            str(category["id"]): category
-            for category in page.categories
-            if category.get("id")
+            str(category["id"]): category for category in page.categories if category.get("id")
         }
         status_counts = Counter(
-            str(tracking.get("last_status") or "unknown")
-            for tracking in trackings.values()
+            str(tracking.get("last_status") or "unknown") for tracking in trackings.values()
         )
 
         data = ShipShowData(
@@ -145,11 +142,7 @@ class ShipShowDataUpdateCoordinator(DataUpdateCoordinator[ShipShowData]):
                     ),
                 )
 
-            if (
-                stops is not None
-                and previous_stops is not None
-                and stops < previous_stops
-            ):
+            if stops is not None and previous_stops is not None and stops < previous_stops:
                 self.hass.bus.async_fire(
                     EVENT_STOPS_DECREASED,
                     _delivery_event_data(

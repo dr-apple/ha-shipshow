@@ -5,7 +5,6 @@ from __future__ import annotations
 from typing import Any
 
 import voluptuous as vol
-
 from homeassistant import config_entries
 from homeassistant.const import CONF_API_KEY
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
@@ -94,7 +93,7 @@ class ShipShowConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         return ShipShowOptionsFlow(config_entry)
 
 
-class ShipShowOptionsFlow(config_entries.OptionsFlow):
+class ShipShowOptionsFlow(config_entries.OptionsFlowWithReload):
     """Handle ShipShow options."""
 
     def __init__(self, config_entry: config_entries.ConfigEntry) -> None:

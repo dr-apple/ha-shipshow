@@ -2,8 +2,8 @@
 
 from __future__ import annotations
 
-from datetime import date, datetime
 import re
+from datetime import date, datetime
 from typing import Any
 
 from homeassistant.helpers.device_registry import DeviceInfo
@@ -67,8 +67,9 @@ class ShipShowTrackingEntity(ShipShowEntity):
         tracking = self.tracking
         carrier = tracking.get("carrier") or {}
         carrier_name = carrier.get("name") or carrier.get("id")
+        entry_id = self.coordinator.config_entry.entry_id
         return DeviceInfo(
-            identifiers={(DOMAIN, self.tracking_id)},
+            identifiers={(DOMAIN, f"{entry_id}_{self.tracking_id}")},
             name=tracking_title(tracking),
             manufacturer=carrier_name,
             model=tracking.get("trackingnumber"),
