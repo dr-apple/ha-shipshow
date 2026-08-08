@@ -2,8 +2,9 @@
 
 from __future__ import annotations
 
+from collections.abc import Callable
 from dataclasses import dataclass
-from typing import Any, Callable
+from typing import Any
 
 from homeassistant.components.binary_sensor import (
     BinarySensorDeviceClass,
@@ -11,7 +12,7 @@ from homeassistant.components.binary_sensor import (
     BinarySensorEntityDescription,
 )
 from homeassistant.core import HomeAssistant, callback
-from homeassistant.helpers.entity_platform import AddEntitiesCallback
+from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 
 from . import ShipShowConfigEntry
 from .coordinator import ShipShowDataUpdateCoordinator
@@ -62,7 +63,7 @@ BINARY_SENSOR_ROLES = {
 async def async_setup_entry(
     hass: HomeAssistant,
     entry: ShipShowConfigEntry,
-    async_add_entities: AddEntitiesCallback,
+    async_add_entities: AddConfigEntryEntitiesCallback,
 ) -> None:
     """Set up ShipShow binary sensors."""
     coordinator = entry.runtime_data
@@ -77,7 +78,7 @@ class ShipShowBinarySensorManager:
     def __init__(
         self,
         coordinator: ShipShowDataUpdateCoordinator,
-        async_add_entities: AddEntitiesCallback,
+        async_add_entities: AddConfigEntryEntitiesCallback,
     ) -> None:
         self.coordinator = coordinator
         self.async_add_entities = async_add_entities
@@ -112,7 +113,9 @@ class ShipShowTrackingBinarySensor(ShipShowTrackingEntity, BinarySensorEntity):
     ) -> None:
         super().__init__(coordinator, tracking_id)
         self.entity_description = description
-        self._attr_unique_id = f"{tracking_id}_{description.key}"
+        self._attr_unique_id = (
+            f"{coordinator.config_entry.entry_id}_{tracking_id}_{description.key}"
+        )
         self.role = BINARY_SENSOR_ROLES.get(description.key, description.key)
         self._attr_suggested_object_id = self.tracking_object_id(self.role)
 

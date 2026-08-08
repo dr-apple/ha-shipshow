@@ -4,7 +4,9 @@ from __future__ import annotations
 
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import CONF_API_KEY
-from homeassistant.core import HomeAssistant, ServiceCall
+from homeassistant.core import HomeAssistant, ServiceCall, callback
+from homeassistant.helpers import device_registry as dr
+from homeassistant.helpers import entity_registry as er
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
 
 from .api import ShipShowClient
@@ -24,9 +26,9 @@ async def async_setup_entry(hass: HomeAssistant, entry: ShipShowConfigEntry) -> 
     )
     coordinator = ShipShowDataUpdateCoordinator(hass, entry, client)
     await coordinator.async_config_entry_first_refresh()
+    await _async_migrate_registry_entries(hass, entry)
 
     entry.runtime_data = coordinator
-    entry.async_on_unload(entry.add_update_listener(_async_update_listener))
     await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
     _async_register_services(hass)
     return True
@@ -37,9 +39,33 @@ async def async_unload_entry(hass: HomeAssistant, entry: ShipShowConfigEntry) ->
     return await hass.config_entries.async_unload_platforms(entry, PLATFORMS)
 
 
-async def _async_update_listener(hass: HomeAssistant, entry: ShipShowConfigEntry) -> None:
-    """Reload entry when options change."""
-    await hass.config_entries.async_reload(entry.entry_id)
+async def _async_migrate_registry_entries(hass: HomeAssistant, entry: ShipShowConfigEntry) -> None:
+    """Scope legacy package entities and devices to their config entry."""
+    unique_id_prefix = f"{entry.entry_id}_"
+
+    @callback
+    def migrate_entity(entity_entry: er.RegistryEntry) -> dict[str, str] | None:
+        if entity_entry.unique_id.startswith(unique_id_prefix):
+            return None
+        return {"new_unique_id": f"{unique_id_prefix}{entity_entry.unique_id}"}
+
+    await er.async_migrate_entries(hass, entry.entry_id, migrate_entity)
+
+    device_registry = dr.async_get(hass)
+    for device_entry in dr.async_entries_for_config_entry(device_registry, entry.entry_id):
+        identifiers = {
+            (domain, f"{unique_id_prefix}{identifier}")
+            if domain == DOMAIN
+            and identifier != entry.entry_id
+            and not identifier.startswith(unique_id_prefix)
+            else (domain, identifier)
+            for domain, identifier in device_entry.identifiers
+        }
+        if identifiers != device_entry.identifiers:
+            device_registry.async_update_device(
+                device_entry.id,
+                new_identifiers=identifiers,
+            )
 
 
 def _async_register_services(hass: HomeAssistant) -> None:

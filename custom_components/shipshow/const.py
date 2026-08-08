@@ -4,6 +4,8 @@ from __future__ import annotations
 
 from datetime import timedelta
 
+from homeassistant.const import Platform
+
 DOMAIN = "shipshow"
 
 EVENT_DELIVERY_OUT_FOR_DELIVERY = "shipshow_lieferung_in_zustellung"
@@ -53,6 +55,10 @@ STATUS_OPTIONS = [
     "undelivered",
 ]
 
-PLATFORMS = ["sensor", "binary_sensor", "calendar"]
+PLATFORMS: list[Platform] = [
+    Platform.SENSOR,
+    Platform.BINARY_SENSOR,
+    Platform.CALENDAR,
+]
 
 RECOMMENDED_SCAN_INTERVAL = timedelta(seconds=DEFAULT_SCAN_INTERVAL)

@@ -2,9 +2,10 @@
 
 from __future__ import annotations
 
+from collections.abc import Callable
 from dataclasses import dataclass
 from datetime import date
-from typing import Any, Callable
+from typing import Any
 
 from homeassistant.components.sensor import (
     SensorDeviceClass,
@@ -13,13 +14,12 @@ from homeassistant.components.sensor import (
 )
 from homeassistant.const import UnitOfTime
 from homeassistant.core import HomeAssistant, callback
-from homeassistant.helpers.entity_platform import AddEntitiesCallback
+from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 
 from . import ShipShowConfigEntry
 from .const import (
     CONF_SCAN_INTERVAL,
     DEFAULT_SCAN_INTERVAL,
-    DOMAIN,
     MIN_SCAN_INTERVAL,
 )
 from .coordinator import ShipShowDataUpdateCoordinator
@@ -114,7 +114,7 @@ ACCOUNT_SENSOR_ROLES = {
 async def async_setup_entry(
     hass: HomeAssistant,
     entry: ShipShowConfigEntry,
-    async_add_entities: AddEntitiesCallback,
+    async_add_entities: AddConfigEntryEntitiesCallback,
 ) -> None:
     """Set up ShipShow sensors."""
     coordinator = entry.runtime_data
@@ -129,7 +129,7 @@ class ShipShowSensorManager:
     def __init__(
         self,
         coordinator: ShipShowDataUpdateCoordinator,
-        async_add_entities: AddEntitiesCallback,
+        async_add_entities: AddConfigEntryEntitiesCallback,
     ) -> None:
         self.coordinator = coordinator
         self.async_add_entities = async_add_entities
@@ -245,9 +245,7 @@ class ShipShowActiveDeliveriesSensor(ShipShowAccountEntity, SensorEntity):
             "hat_lieferung_in_zustellung": any(
                 item.get("status_code") == "outfordelivery" for item in deliveries
             ),
-            "hat_probleme": any(
-                item.get("status_code") == "exception" for item in deliveries
-            ),
+            "hat_probleme": any(item.get("status_code") == "exception" for item in deliveries),
         }
 
 
@@ -292,9 +290,7 @@ class ShipShowDeliveryOverviewSensor(ShipShowAccountEntity, SensorEntity):
             "hat_lieferung_in_zustellung": any(
                 item.get("status_code") == "outfordelivery" for item in deliveries
             ),
-            "hat_probleme": any(
-                item.get("status_code") == "exception" for item in deliveries
-            ),
+            "hat_probleme": any(item.get("status_code") == "exception" for item in deliveries),
         }
 
 
@@ -339,7 +335,9 @@ class ShipShowTrackingSensor(ShipShowTrackingEntity, SensorEntity):
     ) -> None:
         super().__init__(coordinator, tracking_id)
         self.entity_description = description
-        self._attr_unique_id = f"{tracking_id}_{description.key}"
+        self._attr_unique_id = (
+            f"{coordinator.config_entry.entry_id}_{tracking_id}_{description.key}"
+        )
         self.role = TRACKING_SENSOR_ROLES.get(description.key, description.key)
         self._attr_suggested_object_id = self.tracking_object_id(self.role)
 
