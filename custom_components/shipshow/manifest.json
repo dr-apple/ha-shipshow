@@ -1,13 +1,13 @@
 {
   "domain": "shipshow",
   "name": "ShipShow",
-  "codeowners": ["@drapple"],
+  "codeowners": ["@dr-apple"],
   "config_flow": true,
   "dependencies": [],
-  "documentation": "https://github.com/drapple/ha-shipshow",
+  "documentation": "https://github.com/dr-apple/ha-shipshow",
   "integration_type": "service",
   "iot_class": "cloud_polling",
-  "issue_tracker": "https://github.com/drapple/ha-shipshow/issues",
-  "requirements": ["async-timeout>=4.0.3"],
-  "version": "1.0.0"
+  "issue_tracker": "https://github.com/dr-apple/ha-shipshow/issues",
+  "requirements": [],
+  "version": "1.0.1"
 }

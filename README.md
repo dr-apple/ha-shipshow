@@ -2,6 +2,10 @@
 
 Benutzerdefinierte Home-Assistant-Integration für die dokumentierte externe ShipShow-API.
 
+Version `1.0.1` ist mit Home Assistant `2026.8` kompatibel und gegen `2026.8.1`
+getestet. Bestehende Entity-IDs werden bei der erforderlichen Geräte- und
+Unique-ID-Migration beibehalten.
+
 ## Funktionen
 
 - Einrichtung über den Home-Assistant-Konfigurationsdialog
