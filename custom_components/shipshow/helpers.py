@@ -12,6 +12,7 @@ from homeassistant.util import slugify
 
 from .const import DOMAIN
 from .coordinator import ShipShowDataUpdateCoordinator
+from .delivery import stops_field
 
 
 class ShipShowEntity(CoordinatorEntity[ShipShowDataUpdateCoordinator]):
@@ -124,7 +125,13 @@ def tracking_slug(tracking_id: str, tracking: dict[str, Any]) -> str:
 
 
 def tracking_stops(tracking: dict[str, Any]) -> dict[str, Any] | None:
-    """Extract delivery stops from carrier-specific metadata when available."""
+    """Extract delivery stops, preferring the API field `deliverystopsremaining`."""
+    present, remaining = stops_field(tracking)
+    if present:
+        if remaining is None:
+            return None
+        return {"remaining": remaining, "source": "deliverystopsremaining"}
+
     candidates: list[tuple[str, Any]] = []
     for field in ("extra", "config"):
         payload = tracking.get(field)

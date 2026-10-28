@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.1.0
+
+- Read the remaining stops from the new API field `deliverystopsremaining` (Amazon Logistics, while out for delivery). When the field is present it is authoritative, so the text heuristics no longer produce false positives.
+- Add the delivery time as shown in the ShipShow app: `ankunft` (ShipShow estimate from `derivedeta`, otherwise the window `earliestdeliverytime` to `scheduleddeliverytime`, otherwise the single time), plus `ankunft_von`, `ankunft_bis` and `ankunft_geschaetzt`, in the overview attributes, the compact delivery lists and the event data.
+- Include the arrival time in the ready-to-send `benachrichtigung` text and in the delivery overview line.
+- Note: since 2026-10-28 the ShipShow API honours query parameters on GET requests. Without `category_id` it returns the Inbox only (pass `all` for every folder).
+
 ## 1.0.0
 
 - Fix the ShipShow options flow so the configuration menu opens reliably on newer Home Assistant versions.

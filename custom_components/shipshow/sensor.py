@@ -23,6 +23,7 @@ from .const import (
     MIN_SCAN_INTERVAL,
 )
 from .coordinator import ShipShowDataUpdateCoordinator
+from .delivery import tracking_arrival
 from .helpers import (
     ShipShowAccountEntity,
     ShipShowTrackingEntity,
@@ -426,6 +427,10 @@ def _tracking_overview_attributes(tracking: dict[str, Any]) -> dict[str, Any]:
         "kategorie_id": compact["kategorie_id"],
         "stopps_verbleibend": compact["stopps_verbleibend"],
         "stopp_meldung": compact["stopp_meldung"],
+        "ankunft": compact["ankunft"],
+        "ankunft_von": compact["ankunft_von"],
+        "ankunft_bis": compact["ankunft_bis"],
+        "ankunft_geschaetzt": compact["ankunft_geschaetzt"],
         "kommentare": tracking.get("comments"),
         "medien": tracking.get("media"),
         "verlauf": tracking.get("history"),
@@ -462,6 +467,7 @@ def _sorted_deliveries(trackings: dict[str, dict[str, Any]]) -> list[dict[str, A
 def _compact_delivery(tracking_id: str, tracking: dict[str, Any]) -> dict[str, Any]:
     """Return a compact delivery object suitable for automation attributes."""
     stops = tracking_stops(tracking) or {}
+    arrival = tracking_arrival(tracking)
     status_code = tracking.get("last_status")
     return {
         "id": tracking_id,
@@ -477,6 +483,10 @@ def _compact_delivery(tracking_id: str, tracking: dict[str, Any]) -> dict[str, A
         "kategorie_id": tracking.get("category_id"),
         "stopps_verbleibend": stops.get("remaining"),
         "stopp_meldung": stops.get("message"),
+        "ankunft": arrival["text"],
+        "ankunft_von": arrival["von"],
+        "ankunft_bis": arrival["bis"],
+        "ankunft_geschaetzt": arrival["geschaetzt"],
     }
 
 
@@ -484,8 +494,10 @@ def _delivery_overview_line(delivery: dict[str, Any]) -> str:
     """Return one compact human-readable delivery line."""
     title = str(delivery["titel"])
     stops = delivery.get("stopps_verbleibend")
+    arrival = delivery.get("ankunft")
     if stops is not None:
-        return f"{title} - noch {stops} Stopps"
+        suffix = f", Ankunft {arrival}" if arrival else ""
+        return f"{title} - noch {stops} Stopps{suffix}"
     if delivery.get("geplante_lieferung"):
         return f"{title} - {delivery['geplante_lieferung']}"
     if delivery.get("status"):

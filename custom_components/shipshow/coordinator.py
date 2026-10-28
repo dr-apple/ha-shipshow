@@ -35,6 +35,7 @@ from .const import (
     EVENT_STOPS_DECREASED,
     MIN_SCAN_INTERVAL,
 )
+from .delivery import stops_field, tracking_arrival
 
 LOGGER = logging.getLogger(__name__)
 
@@ -173,6 +174,7 @@ def _delivery_event_data(
 ) -> dict[str, Any]:
     """Return event data for delivery automations."""
     title = _tracking_title(tracking)
+    arrival = tracking_arrival(tracking)
     data = {
         "ereignis": event_kind,
         "tracking_id": tracking_id,
@@ -183,10 +185,16 @@ def _delivery_event_data(
         "meldung": tracking.get("last_status_message"),
         "sendungsverfolgung_url": tracking.get("carrierurl"),
         "stopps_verbleibend": stops,
+        "ankunft": arrival["text"],
+        "ankunft_von": arrival["von"],
+        "ankunft_bis": arrival["bis"],
+        "ankunft_geschaetzt": arrival["geschaetzt"],
     }
     if previous_stops is not None:
         data["vorherige_stopps"] = previous_stops
-    data["benachrichtigung"] = _notification_text(title, stops, previous_stops)
+    data["benachrichtigung"] = _notification_text(
+        title, stops, previous_stops, arrival["text"]
+    )
     return data
 
 
@@ -194,13 +202,15 @@ def _notification_text(
     title: str,
     stops: int | None,
     previous_stops: int | None,
+    arrival: str | None = None,
 ) -> str:
     """Return a ready-to-send German notification message."""
+    suffix = f" Ankunft {arrival}." if arrival else ""
     if previous_stops is not None and stops is not None:
-        return f"{title}: noch {stops} Stopps (vorher {previous_stops})."
+        return f"{title}: noch {stops} Stopps (vorher {previous_stops}).{suffix}"
     if stops is not None:
-        return f"{title} ist in Zustellung. Noch {stops} Stopps."
-    return f"{title} ist in Zustellung."
+        return f"{title} ist in Zustellung. Noch {stops} Stopps.{suffix}"
+    return f"{title} ist in Zustellung.{suffix}"
 
 
 def _tracking_title(tracking: dict[str, Any]) -> str:
@@ -221,9 +231,13 @@ def _tracking_carrier(tracking: dict[str, Any]) -> str | None:
 
 
 def _tracking_stop_count(tracking: dict[str, Any] | None) -> int | None:
-    """Extract remaining delivery stops from carrier metadata when available."""
+    """Extract remaining delivery stops, preferring the API field `deliverystopsremaining`."""
     if not tracking:
         return None
+
+    present, remaining = stops_field(tracking)
+    if present:
+        return remaining
 
     candidates: list[tuple[str, Any]] = []
     for field in ("extra", "config"):

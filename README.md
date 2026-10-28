@@ -115,7 +115,7 @@ sort:
   method: name
 ```
 
-Beim Klick auf eine Sendung öffnet Home Assistant das Detailfenster des `Übersicht`-Sensors. Dort stehen die Sendungsdetails als Attribute, unter anderem `meldung`, `sendungsnummer`, `sendungsverfolgung_url`, `verlauf`, `stopps` und `rohdaten`, wenn ShipShow diese Daten liefert.
+Beim Klick auf eine Sendung öffnet Home Assistant das Detailfenster des `Übersicht`-Sensors. Dort stehen die Sendungsdetails als Attribute, unter anderem `meldung`, `sendungsnummer`, `sendungsverfolgung_url`, `verlauf`, `stopps`, `ankunft`, `ankunft_von`, `ankunft_bis`, `ankunft_geschaetzt` und `rohdaten`, wenn ShipShow diese Daten liefert.
 
 Globale ShipShow-Entitäten lassen sich so sammeln:
 
@@ -150,6 +150,8 @@ Event-Daten:
 - `meldung`
 - `sendungsverfolgung_url`
 - `stopps_verbleibend`
+- `ankunft`: Ankunftszeit wie in der ShipShow-App (Schätzung `ca. 11:45`, Zeitfenster `11:15–13:30` oder einzelne Uhrzeit)
+- `ankunft_von`, `ankunft_bis`, `ankunft_geschaetzt`
 - `vorherige_stopps` beim Event `shipshow_stopps_weniger`
 - `benachrichtigung`: fertiger deutscher Push-Text
 
@@ -162,7 +164,7 @@ In Home Assistant legst du eine Automation mit zwei Event-Triggern an:
 5. Als Aktion deinen Mobile-App-Benachrichtigungsdienst auswählen.
 6. Als Nachricht kannst du `trigger.event.data.benachrichtigung` verwenden.
 
-DHL- und Amazon-Stopps werden nur gemeldet, wenn ShipShow diese Informationen in der öffentlichen API-Antwort mitliefert. Die Integration durchsucht Carrier-Metadaten, Lieferfortschrittsmeldungen und die neuesten Verlaufseinträge nach Stopps.
+Die verbleibenden Stopps stammen aus dem API-Feld `deliverystopsremaining`. ShipShow liefert es für Amazon Logistics, solange das Paket in Zustellung ist (für andere Dienstleister und nach der Zustellung ist es `null`). Die Ankunftszeit entsteht aus `derivedeta` (Schätzung von ShipShow, nur Amazon), sonst aus `earliestdeliverytime` bis `scheduleddeliverytime` (Zeitfenster) oder aus `scheduleddeliverytime` allein. Fehlt das Feld `deliverystopsremaining` in der Antwort ganz (ältere API), durchsucht die Integration weiterhin Carrier-Metadaten, Lieferfortschrittsmeldungen und die neuesten Verlaufseinträge nach Stopps.
 
 ## API-Hinweise
 
