@@ -12,11 +12,15 @@ from typing import Any
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
 from homeassistant.exceptions import ConfigEntryAuthFailed
+from homeassistant.helpers import device_registry as dr
+from homeassistant.helpers.storage import Store
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
+from homeassistant.util import dt as dt_util
 
 from .api import ShipShowAuthError, ShipShowClient, ShipShowError, ShipShowQuery
 from .const import (
     CONF_CATEGORY_ID,
+    CONF_DELIVERED_KEEP_DAYS,
     CONF_INCLUDE_DELIVERED,
     CONF_LIMIT,
     CONF_MAX_PAGES,
@@ -25,6 +29,7 @@ from .const import (
     CONF_SORT_BY,
     CONF_SORT_ORDER,
     CONF_STATUS_FILTER,
+    DEFAULT_DELIVERED_KEEP_DAYS,
     DEFAULT_LIMIT,
     DEFAULT_MAX_PAGES,
     DEFAULT_SCAN_INTERVAL,
@@ -62,6 +67,11 @@ class ShipShowDataUpdateCoordinator(DataUpdateCoordinator[ShipShowData]):
         client: ShipShowClient,
     ) -> None:
         self.client = client
+        self._gone_since: dict[str, str] = {}
+        self._delivered_since: dict[str, str] = {}
+        self._store: Store[dict[str, dict[str, str]]] = Store(
+            hass, 1, f"{DOMAIN}_gone_since_{config_entry.entry_id}"
+        )
         scan_interval = max(
             MIN_SCAN_INTERVAL,
             int(config_entry.options.get(CONF_SCAN_INTERVAL, DEFAULT_SCAN_INTERVAL)),
@@ -73,6 +83,12 @@ class ShipShowDataUpdateCoordinator(DataUpdateCoordinator[ShipShowData]):
             config_entry=config_entry,
             update_interval=timedelta(seconds=scan_interval),
         )
+
+    async def async_load_state(self) -> None:
+        """Load persisted delivered/missing timestamps."""
+        stored = await self._store.async_load() or {}
+        self._gone_since = dict(stored.get("gone", {}))
+        self._delivered_since = dict(stored.get("delivered", {}))
 
     async def _async_update_data(self) -> ShipShowData:
         """Fetch data from ShipShow."""
@@ -95,14 +111,41 @@ class ShipShowDataUpdateCoordinator(DataUpdateCoordinator[ShipShowData]):
         except ShipShowError as err:
             raise UpdateFailed(str(err)) from err
 
+        keep_days = int(options.get(CONF_DELIVERED_KEEP_DAYS, DEFAULT_DELIVERED_KEEP_DAYS))
+        now = dt_util.utcnow()
+        known = self._known_tracking_ids() if keep_days > 0 else set()
+        delivered_ids: set[str] = set()
+        expired_ids: set[str] = set()
         trackings: dict[str, dict[str, Any]] = {}
         for tracking in page.trackings:
             tracking_id = tracking.get("tracking_id") or tracking.get("id")
             tracking_number = tracking.get("trackingnumber")
             unique_id = str(tracking_id or tracking_number or len(trackings))
-            if not include_delivered and tracking.get("last_status") == "delivered":
-                continue
+            if tracking.get("last_status") == "delivered":
+                if keep_days > 0:
+                    # Keep delivered packages for N days after we first saw them delivered.
+                    # Packages we never tracked (old history) stay out.
+                    if unique_id not in known and unique_id not in self._delivered_since:
+                        continue
+                    delivered_ids.add(unique_id)
+                    since = dt_util.parse_datetime(self._delivered_since.get(unique_id, ""))
+                    if since is None:
+                        self._delivered_since[unique_id] = now.isoformat()
+                        since = now
+                        self._store.async_delay_save(self._state_to_save, 10)
+                    if now - since >= timedelta(days=keep_days):
+                        expired_ids.add(unique_id)
+                        continue
+                elif not include_delivered:
+                    continue
             trackings[unique_id] = tracking
+        if keep_days > 0:
+            for stale in [key for key in self._delivered_since if key not in delivered_ids]:
+                del self._delivered_since[stale]
+                self._store.async_delay_save(self._state_to_save, 10)
+        elif self._delivered_since:
+            self._delivered_since.clear()
+            self._store.async_delay_save(self._state_to_save, 10)
 
         categories = {
             str(category["id"]): category for category in page.categories if category.get("id")
@@ -118,7 +161,80 @@ class ShipShowDataUpdateCoordinator(DataUpdateCoordinator[ShipShowData]):
             has_more_data=page.has_more_data,
         )
         self._async_fire_delivery_events(data)
+        self._async_remove_stale_devices(data, keep_days, expired_ids)
         return data
+
+    def _known_tracking_ids(self) -> set[str]:
+        """Return tracking ids we already have (previous data or a device in the registry)."""
+        known = set(self.data.trackings) if getattr(self, "data", None) else set()
+        entry_id = self.config_entry.entry_id
+        prefix = f"{entry_id}_"
+        registry = dr.async_get(self.hass)
+        for device in dr.async_entries_for_config_entry(registry, entry_id):
+            for domain, ident in device.identifiers:
+                if domain == DOMAIN and ident.startswith(prefix):
+                    known.add(ident[len(prefix) :])
+        return known
+
+    def _state_to_save(self) -> dict[str, dict[str, str]]:
+        """Return the persisted timestamps."""
+        return {"gone": self._gone_since, "delivered": self._delivered_since}
+
+    def _async_remove_stale_devices(
+        self, data: ShipShowData, keep_days: int, expired_ids: set[str]
+    ) -> None:
+        """Remove package devices (and their entities) that are expired or vanished.
+
+        Delivered packages are dropped right away once they are older than the keep time
+        (``expired_ids``); packages that disappeared from ShipShow without being reported
+        as delivered are removed after the same number of days.
+        """
+        if keep_days <= 0:
+            if self._gone_since:
+                self._gone_since.clear()
+                self._store.async_delay_save(self._state_to_save, 10)
+            return
+        registry = dr.async_get(self.hass)
+        entry_id = self.config_entry.entry_id
+        prefix = f"{entry_id}_"
+        now = dt_util.utcnow()
+        changed = False
+        seen: set[str] = set()
+        for device in dr.async_entries_for_config_entry(registry, entry_id):
+            tracking_id = next(
+                (
+                    ident[len(prefix) :]
+                    for domain, ident in device.identifiers
+                    if domain == DOMAIN and ident.startswith(prefix)
+                ),
+                None,
+            )
+            if tracking_id is None:  # global ShipShow account device
+                continue
+            seen.add(device.id)
+            if tracking_id in data.trackings:
+                changed |= self._gone_since.pop(device.id, None) is not None
+                continue
+            if tracking_id in expired_ids:
+                gone = True
+            elif data.has_more_data:  # list is cut off: a missing package may not be gone
+                continue
+            else:
+                since = dt_util.parse_datetime(self._gone_since.get(device.id, ""))
+                if since is None:
+                    self._gone_since[device.id] = now.isoformat()
+                    changed = True
+                gone = since is not None and now - since >= timedelta(days=keep_days)
+            if gone:
+                LOGGER.info("Removing delivered package device %s", device.name)
+                registry.async_remove_device(device.id)
+                self._gone_since.pop(device.id, None)
+                changed = True
+        for stale in [key for key in self._gone_since if key not in seen]:
+            del self._gone_since[stale]
+            changed = True
+        if changed:
+            self._store.async_delay_save(self._state_to_save, 10)
 
     def _async_fire_delivery_events(self, data: ShipShowData) -> None:
         """Fire Home Assistant events for delivery status and stop updates."""
@@ -192,9 +308,7 @@ def _delivery_event_data(
     }
     if previous_stops is not None:
         data["vorherige_stopps"] = previous_stops
-    data["benachrichtigung"] = _notification_text(
-        title, stops, previous_stops, arrival["text"]
-    )
+    data["benachrichtigung"] = _notification_text(title, stops, previous_stops, arrival["text"])
     return data
 
 

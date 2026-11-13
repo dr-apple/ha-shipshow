@@ -13,6 +13,7 @@ from .api import ShipShowAuthError, ShipShowClient, ShipShowError, ShipShowQuery
 from .const import (
     CONF_API_BASE_URL,
     CONF_CATEGORY_ID,
+    CONF_DELIVERED_KEEP_DAYS,
     CONF_INCLUDE_DELIVERED,
     CONF_LIMIT,
     CONF_MAX_PAGES,
@@ -22,6 +23,7 @@ from .const import (
     CONF_SORT_ORDER,
     CONF_STATUS_FILTER,
     DEFAULT_API_BASE_URL,
+    DEFAULT_DELIVERED_KEEP_DAYS,
     DEFAULT_LIMIT,
     DEFAULT_MAX_PAGES,
     DEFAULT_SCAN_INTERVAL,
@@ -141,6 +143,10 @@ class ShipShowOptionsFlow(config_entries.OptionsFlowWithReload):
                         default=options.get(CONF_INCLUDE_DELIVERED, True),
                     ): bool,
                     vol.Required(
+                        CONF_DELIVERED_KEEP_DAYS,
+                        default=options.get(CONF_DELIVERED_KEEP_DAYS, DEFAULT_DELIVERED_KEEP_DAYS),
+                    ): vol.All(vol.Coerce(int), vol.Range(min=0, max=365)),
+                    vol.Required(
                         CONF_SCAN_INTERVAL,
                         default=options.get(CONF_SCAN_INTERVAL, DEFAULT_SCAN_INTERVAL),
                     ): vol.All(vol.Coerce(int), vol.Range(min=MIN_SCAN_INTERVAL)),
@@ -160,5 +166,6 @@ def _default_options() -> dict[str, Any]:
         CONF_SORT_BY: DEFAULT_SORT_BY,
         CONF_SORT_ORDER: DEFAULT_SORT_ORDER,
         CONF_INCLUDE_DELIVERED: True,
+        CONF_DELIVERED_KEEP_DAYS: DEFAULT_DELIVERED_KEEP_DAYS,
         CONF_SCAN_INTERVAL: DEFAULT_SCAN_INTERVAL,
     }

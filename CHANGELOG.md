@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.2.0
+
+- Add the option `Zugestellte Pakete behalten (Tage)` (`delivered_keep_days`, default `0` = off). With a value of 1 or more, delivered packages stay visible for that many days after they were first seen as delivered and are then removed automatically together with their device and sensors. The setting overrides `Zugestellte Pakete einschließen`.
+- Packages that disappear from ShipShow without being reported as delivered are removed after the same number of days (not while the result list is cut off by the page limit).
+- Packages that were never tracked before (old delivered history) are not added when the option is enabled.
+- The global ShipShow device and its sensors are never removed.
+
 ## 1.1.0
 
 - Read the remaining stops from the new API field `deliverystopsremaining` (Amazon Logistics, while out for delivery). When the field is present it is authoritative, so the text heuristics no longer produce false positives.

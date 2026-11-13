@@ -25,6 +25,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ShipShowConfigEntry) -> 
         api_base_url=entry.data.get(CONF_API_BASE_URL, DEFAULT_API_BASE_URL),
     )
     coordinator = ShipShowDataUpdateCoordinator(hass, entry, client)
+    await coordinator.async_load_state()
     await coordinator.async_config_entry_first_refresh()
     await _async_migrate_registry_entries(hass, entry)
 

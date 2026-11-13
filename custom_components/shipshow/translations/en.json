@@ -31,6 +31,7 @@
           "sort_by": "Sortieren nach",
           "sort_order": "Sortierreihenfolge",
           "include_delivered": "Zugestellte Pakete einschließen",
+          "delivered_keep_days": "Keep delivered packages (days)",
           "scan_interval": "Abrufintervall"
         },
         "data_description": {
@@ -42,6 +43,7 @@
           "sort_by": "Feld, nach dem ShipShow die Sendungen sortiert.",
           "sort_order": "Sortierreihenfolge für die ShipShow-Abfrage.",
           "include_delivered": "Wenn deaktiviert, werden zugestellte Sendungen aus Home Assistant ausgeblendet.",
+          "delivered_keep_days": "0 = off (\"Include delivered packages\" applies). From 1: delivered packages stay visible for this many days, then their device and sensors are deleted automatically.",
           "scan_interval": "Zeit zwischen zwei API-Abrufen in Sekunden. Mindestwert: 60 Sekunden."
         }
       }

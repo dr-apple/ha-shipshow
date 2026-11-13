@@ -42,6 +42,13 @@ Einstellungen > Geräte & Dienste > ShipShow > Konfigurieren > Abrufintervall
 
 Der Wert wird in Sekunden angegeben. Der Mindestwert ist 60 Sekunden, passend zur Empfehlung der öffentlichen ShipShow-API. Nach dem Speichern lädt Home Assistant die Integration neu und der globale Sensor `ShipShow Abrufintervall` zeigt den aktiven Wert an.
 
+### Zugestellte Pakete automatisch entfernen
+
+Einstellungen > Geräte & Dienste > ShipShow > Konfigurieren > Zugestellte Pakete behalten (Tage)
+
+- `0` (Standard): aus. Es gilt die Option „Zugestellte Pakete einschließen“; Geräte zugestellter Pakete bleiben als „nicht verfügbar“ in Home Assistant stehen.
+- `1` oder mehr: Zugestellte Pakete bleiben so viele Tage nach der Zustellung sichtbar. Danach löscht die Integration das Paket-Gerät samt Sensoren automatisch. Pakete, die ohne Zustellmeldung aus ShipShow verschwinden, werden nach derselben Zeit entfernt. Das globale ShipShow-Gerät bleibt immer erhalten.
+
 ## Namensschema
 
 Globale Entitäten hängen am Gerät `ShipShow` und heißen zum Beispiel:

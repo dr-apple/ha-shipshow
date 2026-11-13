@@ -15,6 +15,7 @@ DEFAULT_API_BASE_URL = "https://api.shipshow.net/external/"
 DEFAULT_LIMIT = 50
 DEFAULT_MAX_PAGES = 10
 DEFAULT_SCAN_INTERVAL = 60
+DEFAULT_DELIVERED_KEEP_DAYS = 0
 MIN_SCAN_INTERVAL = 60
 
 DEFAULT_SORT_BY = "deliverydate"
@@ -24,6 +25,7 @@ CONF_API_KEY = "api_key"
 CONF_API_BASE_URL = "api_base_url"
 CONF_CATEGORY_ID = "category_id"
 CONF_INCLUDE_DELIVERED = "include_delivered"
+CONF_DELIVERED_KEEP_DAYS = "delivered_keep_days"
 CONF_LIMIT = "limit"
 CONF_MAX_PAGES = "max_pages"
 CONF_SCAN_INTERVAL = "scan_interval"
