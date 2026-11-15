@@ -1,95 +1,109 @@
-# ShipShow für Home Assistant
+# ShipShow for Home Assistant
 
-Benutzerdefinierte Home-Assistant-Integration für die dokumentierte externe ShipShow-API.
+**English** · [Deutsch](README.de.md)
 
-Version `1.0.1` ist mit Home Assistant `2026.8` kompatibel und gegen `2026.8.1`
-getestet. Bestehende Entity-IDs werden bei der erforderlichen Geräte- und
-Unique-ID-Migration beibehalten.
+[![hacs_badge](https://img.shields.io/badge/HACS-Custom-41BDF5.svg)](https://hacs.xyz)
 
-## Funktionen
+![ShipShow for Home Assistant](docs/images/banner.svg)
 
-- Einrichtung über den Home-Assistant-Konfigurationsdialog
-- Nutzt den öffentlichen Endpunkt `GET /external/getTrackings`
-- Unterstützt alle dokumentierten Abfrageoptionen: Kategorie, Suche, Statusfilter, Limit, Offset über Pagination, Sortierfeld und Sortierreihenfolge
-- Automatische Pagination bis zur konfigurierten Seitengrenze
-- Globale ShipShow-Entitäten an einem eigenen `ShipShow`-Gerät
-- Automationsfreundliche Sensoren `ShipShow Aktuelle Lieferungen` und `ShipShow Lieferübersicht`
-- Pro Sendung: Status, letzte Meldung, geplante Lieferung und Tage bis Lieferung
-- Pro Sendung: Binärsensoren für Zugestellt, In Zustellung und Problem
-- Pro Sendung: Kalender-Entitäten für geplante Liefertermine
-- Dashboard-Attribute für Auto Entities: `shipshow_scope`, `shipshow_dashboard_group`, `shipshow_entity_group`, `shipshow_entity_role`
-- Diagnose mit ausgeblendetem API-Schlüssel
-- HACS-Metadaten und GitHub-Validierungsworkflows
+Custom Home Assistant integration for the documented external ShipShow API. Every shipment in the ShipShow app becomes its own device with status, arrival time, remaining stops and a calendar entry.
 
-## Voraussetzungen
+![How it works: ShipShow app → API → Home Assistant → push](docs/images/how-it-works.svg)
 
-- ShipShow-Pro-Abo
-- API-Schlüssel aus der ShipShow-App unter Einstellungen > API-Schlüssel
+Version `1.0.1` is compatible with Home Assistant `2026.8` and tested against `2026.8.1`. Existing entity IDs are kept during the required device and unique-ID migration.
 
-## Installation mit HACS
+## Features
 
-1. Dieses Repository in HACS als benutzerdefiniertes Repository hinzufügen.
-2. Kategorie `Integration` auswählen.
-3. `ShipShow` installieren.
-4. Home Assistant neu starten.
-5. Einstellungen > Geräte & Dienste > Integration hinzufügen > ShipShow öffnen.
+- Setup through the Home Assistant config flow
+- Uses the public endpoint `GET /external/getTrackings`
+- Supports all documented query options: category, search, status filter, limit, offset via pagination, sort field and sort order
+- Automatic pagination up to the configured page limit
+- Global ShipShow entities on their own `ShipShow` device
+- Automation-friendly sensors `ShipShow Aktuelle Lieferungen` (current deliveries) and `ShipShow Lieferübersicht` (delivery overview)
+- Per shipment: status, last update, planned delivery and days until delivery
+- Per shipment: binary sensors for delivered, out for delivery and problem
+- Per shipment: calendar entities for planned delivery dates
+- Dashboard attributes for Auto Entities: `shipshow_scope`, `shipshow_dashboard_group`, `shipshow_entity_group`, `shipshow_entity_role`
+- Diagnostics with the API key redacted
+- HACS metadata and GitHub validation workflows
 
-## Optionen
+<img src="docs/images/parcel.svg" alt="Example shipment with status, last update, planned delivery and stops" width="460">
 
-Das Abrufintervall stellst du in Home Assistant hier ein:
+*Illustration – example data of one shipment.*
 
-Einstellungen > Geräte & Dienste > ShipShow > Konfigurieren > Abrufintervall
+![Parcel device in Home Assistant](docs/images/ha-device-page.png)
 
-Der Wert wird in Sekunden angegeben. Der Mindestwert ist 60 Sekunden, passend zur Empfehlung der öffentlichen ShipShow-API. Nach dem Speichern lädt Home Assistant die Integration neu und der globale Sensor `ShipShow Abrufintervall` zeigt den aktiven Wert an.
+*Real screenshot from a Home Assistant installation (German UI, personal data replaced).*
 
-### Zugestellte Pakete automatisch entfernen
+## Requirements
 
-Einstellungen > Geräte & Dienste > ShipShow > Konfigurieren > Zugestellte Pakete behalten (Tage)
+- ShipShow Pro subscription
+- API key from the ShipShow app under Settings > API key
 
-- `0` (Standard): aus. Es gilt die Option „Zugestellte Pakete einschließen“; Geräte zugestellter Pakete bleiben als „nicht verfügbar“ in Home Assistant stehen.
-- `1` oder mehr: Zugestellte Pakete bleiben so viele Tage nach der Zustellung sichtbar. Danach löscht die Integration das Paket-Gerät samt Sensoren automatisch. Pakete, die ohne Zustellmeldung aus ShipShow verschwinden, werden nach derselben Zeit entfernt. Das globale ShipShow-Gerät bleibt immer erhalten.
+## Installation with HACS
 
-## Namensschema
+1. Add this repository to HACS as a custom repository.
+2. Select category `Integration`.
+3. Install `ShipShow`.
+4. Restart Home Assistant.
+5. Open Settings > Devices & services > Add integration > ShipShow.
 
-Globale Entitäten hängen am Gerät `ShipShow` und heißen zum Beispiel:
+## Options
 
-- `sensor.shipshow_lieferuebersicht`
-- `sensor.shipshow_aktuelle_lieferungen`
-- `sensor.shipshow_pakete_gesamt`
-- `sensor.shipshow_in_zustellung`
-- `sensor.shipshow_abrufintervall`
+Set the polling interval here:
 
-Neue Sendungs-Entitäten bekommen vorgeschlagene Entity-IDs nach diesem Schema:
+Settings > Devices & services > ShipShow > Configure > Polling interval
 
-- `sensor.shipshow_lieferung_<sendungsnummer>_status`
-- `sensor.shipshow_lieferung_<sendungsnummer>_uebersicht`
-- `sensor.shipshow_lieferung_<sendungsnummer>_letzte_meldung`
-- `sensor.shipshow_lieferung_<sendungsnummer>_geplante_lieferung`
-- `sensor.shipshow_lieferung_<sendungsnummer>_tage_bis_lieferung`
-- `binary_sensor.shipshow_lieferung_<sendungsnummer>_zugestellt`
-- `binary_sensor.shipshow_lieferung_<sendungsnummer>_in_zustellung`
-- `binary_sensor.shipshow_lieferung_<sendungsnummer>_problem`
+The value is in seconds. The minimum is 60 seconds, matching the recommendation of the public ShipShow API. After saving, Home Assistant reloads the integration and the global sensor `ShipShow Abrufintervall` shows the active value.
 
-Bestehende Entity-IDs benennt Home Assistant aus Sicherheitsgründen nicht automatisch um. Die neuen Attribute sind aber auch bei bestehenden Entitäten vorhanden.
+### Remove delivered parcels automatically
 
-In Home Assistant ist jede Sendung ein eigenes Gerät. Die Entitäten heißen innerhalb der Sendung nur noch `Status`, `Letzte Meldung`, `Geplante Lieferung` usw. Dadurch vermeidet die Oberfläche doppelte Namen wie `AirTag Joybuy ShipShow Lieferung AirTag Joybuy ...`.
+Settings > Devices & services > ShipShow > Configure > Keep delivered parcels (days)
+
+- `0` (default): off. The option "Include delivered parcels" applies; devices of delivered parcels stay in Home Assistant as "unavailable".
+- `1` or more: delivered parcels stay visible for that many days after delivery. Afterwards the integration deletes the parcel device including its sensors. Parcels that disappear from ShipShow without a delivery message are removed after the same time. The global ShipShow device is always kept.
+
+## Naming scheme
+
+The integration's entity names are German. Global entities belong to the `ShipShow` device, for example:
+
+- `sensor.shipshow_lieferuebersicht` (delivery overview)
+- `sensor.shipshow_aktuelle_lieferungen` (current deliveries)
+- `sensor.shipshow_pakete_gesamt` (parcels total)
+- `sensor.shipshow_in_zustellung` (out for delivery)
+- `sensor.shipshow_abrufintervall` (polling interval)
+
+New shipment entities get suggested entity IDs following this scheme:
+
+- `sensor.shipshow_lieferung_<tracking_number>_status`
+- `sensor.shipshow_lieferung_<tracking_number>_uebersicht` (overview)
+- `sensor.shipshow_lieferung_<tracking_number>_letzte_meldung` (last update)
+- `sensor.shipshow_lieferung_<tracking_number>_geplante_lieferung` (planned delivery)
+- `sensor.shipshow_lieferung_<tracking_number>_tage_bis_lieferung` (days until delivery)
+- `binary_sensor.shipshow_lieferung_<tracking_number>_zugestellt` (delivered)
+- `binary_sensor.shipshow_lieferung_<tracking_number>_in_zustellung` (out for delivery)
+- `binary_sensor.shipshow_lieferung_<tracking_number>_problem`
+
+Home Assistant does not rename existing entity IDs automatically, for safety. The new attributes are present on existing entities too.
+
+Each shipment is its own device in Home Assistant. Inside a shipment the entities are just called `Status`, `Letzte Meldung`, `Geplante Lieferung` and so on. This avoids duplicated names like `AirTag Joybuy ShipShow Lieferung AirTag Joybuy ...` in the UI.
 
 ## Auto Entities
 
-Alle Sendungs-Entitäten tragen diese Attribute:
+All shipment entities carry these attributes:
 
 - `shipshow_scope: lieferung`
 - `shipshow_dashboard_group: shipshow_lieferungen`
-- `shipshow_entity_group: shipshow_lieferung_<sendungsnummer>`
-- `shipshow_entity_role: uebersicht`, `status`, `letzte_meldung`, `geplante_lieferung`, `tage_bis_lieferung`, `zugestellt`, `in_zustellung` oder `problem`
+- `shipshow_entity_group: shipshow_lieferung_<tracking_number>`
+- `shipshow_entity_role: uebersicht`, `status`, `letzte_meldung`, `geplante_lieferung`, `tage_bis_lieferung`, `zugestellt`, `in_zustellung` or `problem`
 
-Beispiel für eine Auto-Entities-Karte, die alle Sendungs-Entitäten automatisch einsammelt:
+Auto Entities card that collects all shipment entities automatically:
 
 ```yaml
 type: custom:auto-entities
 card:
   type: entities
-  title: ShipShow Lieferungen
+  title: ShipShow deliveries
 filter:
   include:
     - attributes:
@@ -99,13 +113,13 @@ sort:
   attribute: shipshow_entity_group
 ```
 
-Beispiel für eine klickbare Sendungsübersicht:
+Clickable shipment overview:
 
 ```yaml
 type: custom:auto-entities
 card:
   type: entities
-  title: ShipShow Lieferungen
+  title: ShipShow deliveries
   show_header_toggle: false
 filter:
   include:
@@ -122,15 +136,15 @@ sort:
   method: name
 ```
 
-Beim Klick auf eine Sendung öffnet Home Assistant das Detailfenster des `Übersicht`-Sensors. Dort stehen die Sendungsdetails als Attribute, unter anderem `meldung`, `sendungsnummer`, `sendungsverfolgung_url`, `verlauf`, `stopps`, `ankunft`, `ankunft_von`, `ankunft_bis`, `ankunft_geschaetzt` und `rohdaten`, wenn ShipShow diese Daten liefert.
+Clicking a shipment opens the more-info dialog of the overview sensor. Its attributes contain the shipment details, among others `meldung`, `sendungsnummer`, `sendungsverfolgung_url`, `verlauf`, `stopps`, `ankunft`, `ankunft_von`, `ankunft_bis`, `ankunft_geschaetzt` and `rohdaten`, when ShipShow provides them.
 
-Globale ShipShow-Entitäten lassen sich so sammeln:
+Global ShipShow entities:
 
 ```yaml
 type: custom:auto-entities
 card:
   type: entities
-  title: ShipShow Übersicht
+  title: ShipShow overview
 filter:
   include:
     - attributes:
@@ -139,48 +153,84 @@ sort:
   method: name
 ```
 
-## Push-Automation für Zustellung und Stopps
+## Push automation for delivery and stops
 
-Die Integration feuert Home-Assistant-Events, damit eine einzige Automation für alle aktuellen und zukünftigen Sendungen reicht.
+The integration fires Home Assistant events, so a single automation covers all current and future shipments.
 
 Events:
 
-- `shipshow_lieferung_in_zustellung`: Wird ausgelöst, wenn eine Sendung in Zustellung geht.
-- `shipshow_stopps_weniger`: Wird ausgelöst, wenn die verbleibenden Stopps kleiner werden.
+- `shipshow_lieferung_in_zustellung`: fired when a shipment goes out for delivery.
+- `shipshow_stopps_weniger`: fired when the remaining stops decrease.
 
-Event-Daten:
+Event data:
 
-- `titel`
-- `sendungsnummer`
-- `dienstleister`
+- `titel` (title)
+- `sendungsnummer` (tracking number)
+- `dienstleister` (carrier)
 - `status`
-- `meldung`
-- `sendungsverfolgung_url`
-- `stopps_verbleibend`
-- `ankunft`: Ankunftszeit wie in der ShipShow-App (Schätzung `ca. 11:45`, Zeitfenster `11:15–13:30` oder einzelne Uhrzeit)
+- `meldung` (message)
+- `sendungsverfolgung_url` (tracking URL)
+- `stopps_verbleibend` (stops remaining)
+- `ankunft`: arrival time as in the ShipShow app (estimate `ca. 11:45`, window `11:15–13:30` or a single time)
 - `ankunft_von`, `ankunft_bis`, `ankunft_geschaetzt`
-- `vorherige_stopps` beim Event `shipshow_stopps_weniger`
-- `benachrichtigung`: fertiger deutscher Push-Text
+- `vorherige_stopps` (previous stops) for the event `shipshow_stopps_weniger`
+- `benachrichtigung`: ready-made German push text
 
-In Home Assistant legst du eine Automation mit zwei Event-Triggern an:
+Ready-to-use automation:
 
-1. Einstellungen > Automationen & Szenen > Automation erstellen.
-2. Trigger `Event` auswählen.
-3. Event-Typ `shipshow_lieferung_in_zustellung` hinzufügen.
-4. Zweiten Event-Trigger mit `shipshow_stopps_weniger` hinzufügen.
-5. Als Aktion deinen Mobile-App-Benachrichtigungsdienst auswählen.
-6. Als Nachricht kannst du `trigger.event.data.benachrichtigung` verwenden.
+```yaml
+alias: ShipShow – parcel is coming
+triggers:
+  - trigger: event
+    event_type: shipshow_lieferung_in_zustellung
+  - trigger: event
+    event_type: shipshow_stopps_weniger
+conditions:
+  # optional: only notify once 5 or fewer stops are left
+  - condition: template
+    value_template: >
+      {{ trigger.event.data.stopps_verbleibend is none
+         or trigger.event.data.stopps_verbleibend <= 5 }}
+actions:
+  - action: notify.mobile_app_my_phone
+    data:
+      title: "📦 {{ trigger.event.data.titel }}"
+      message: >
+        {{ trigger.event.data.titel }} is out for delivery.
+        {% if trigger.event.data.stopps_verbleibend is not none %}
+        {{ trigger.event.data.stopps_verbleibend }} stops left.{% endif %}
+        {% if trigger.event.data.ankunft %}Arrival: {{ trigger.event.data.ankunft }}{% endif %}
+      data:
+        url: "{{ trigger.event.data.sendungsverfolgung_url }}"
+        tag: "shipshow-{{ trigger.event.data.sendungsnummer }}"
+mode: queued
+```
 
-Die verbleibenden Stopps stammen aus dem API-Feld `deliverystopsremaining`. ShipShow liefert es für Amazon Logistics, solange das Paket in Zustellung ist (für andere Dienstleister und nach der Zustellung ist es `null`). Die Ankunftszeit entsteht aus `derivedeta` (Schätzung von ShipShow, nur Amazon), sonst aus `earliestdeliverytime` bis `scheduleddeliverytime` (Zeitfenster) oder aus `scheduleddeliverytime` allein. Fehlt das Feld `deliverystopsremaining` in der Antwort ganz (ältere API), durchsucht die Integration weiterhin Carrier-Metadaten, Lieferfortschrittsmeldungen und die neuesten Verlaufseinträge nach Stopps.
+(For German texts simply use `message: "{{ trigger.event.data.benachrichtigung }}"`.)
 
-## API-Hinweise
+Remaining stops come from the API field `deliverystopsremaining`. ShipShow provides it for Amazon Logistics while the parcel is out for delivery (for other carriers and after delivery it is `null`). The arrival time is derived from `derivedeta` (ShipShow's estimate, Amazon only), otherwise from `earliestdeliverytime` to `scheduleddeliverytime` (window) or from `scheduleddeliverytime` alone. If `deliverystopsremaining` is missing from the response entirely (older API), the integration still searches carrier metadata, delivery-progress messages and the newest history entries for stops.
 
-Die öffentliche API-Dokumentation unter [shipshow.net/api](https://www.shipshow.net/api) dokumentiert:
+## API notes
 
-- Basis-URL: `https://api.shipshow.net/external/`
-- Endpunkt: `GET /external/getTrackings`
-- Authentifizierung: Query-Parameter `apikey`
-- Empfohlenes Abrufintervall: nicht öfter als einmal pro Minute
-- Maximale Seitengröße: 50
+The public API documentation at [shipshow.net/api](https://www.shipshow.net/api) documents:
 
-Diese Integration folgt dem öffentlichen API-Vertrag und nutzt keine internen ShipShow-Web-App-Endpunkte.
+- Base URL: `https://api.shipshow.net/external/`
+- Endpoint: `GET /external/getTrackings`
+- Authentication: query parameter `apikey`
+- Recommended polling interval: not more than once per minute
+- Maximum page size: 50
+
+This integration follows the public API contract and does not use internal ShipShow web-app endpoints.
+
+## Troubleshooting
+
+| Problem | Fix |
+|---|---|
+| "Invalid API key" | Copy the key again in the ShipShow app under *Settings › API key*; a Pro subscription is required. |
+| No stops | ShipShow only provides stops for Amazon Logistics while out for delivery. |
+| Old parcels stay around | Set "Keep delivered parcels (days)" to 1 or more. |
+| Reporting a bug | *Settings › Devices & services › ShipShow › Download diagnostics* (the API key is redacted). |
+
+## License
+
+MIT – see [LICENSE](LICENSE). Not an official ShipShow project.
