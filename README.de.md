@@ -33,6 +33,10 @@ Unique-ID-Migration beibehalten.
 
 *Illustration – Beispieldaten einer Sendung.*
 
+![Sendungsgerät in Home Assistant](docs/images/ha-device-page.png)
+
+*Echter Screenshot aus einer Home-Assistant-Installation (persönliche Daten ersetzt).*
+
 ## Voraussetzungen
 
 - ShipShow-Pro-Abo

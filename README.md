@@ -31,6 +31,10 @@ Version `1.0.1` is compatible with Home Assistant `2026.8` and tested against `2
 
 *Illustration – example data of one shipment.*
 
+![Parcel device in Home Assistant](docs/images/ha-device-page.png)
+
+*Real screenshot from a Home Assistant installation (German UI, personal data replaced).*
+
 ## Requirements
 
 - ShipShow Pro subscription
